@@ -36,4 +36,15 @@ public class RemoteKeysTest {
         Map<Integer, String> keys = parse("190:a.b", "190:c.d");
         assertEquals("c.d", keys.get(190));
     }
+
+    @Test public void scancodeEntries() {
+        java.util.List<String> entries = java.util.Arrays.asList(
+                "scan:490:com.wbd.hbomax", " scan : 491 : a.b ", "scan:x:a.b", "scan:12:", "190:c.d", "scan:491:e.f");
+        Map<Integer, String> scans = RemoteKeys.parseAppScancodes(entries);
+        assertEquals(2, scans.size());
+        assertEquals("com.wbd.hbomax", scans.get(490));
+        assertEquals("e.f", scans.get(491));
+        // and the keycode parser leaves scancode entries alone
+        assertEquals(1, parse(entries.toArray(new String[0])).size());
+    }
 }

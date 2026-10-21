@@ -102,6 +102,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
      */
     private static final long TIME_VALID_AFTER_MS = 1_735_689_600_000L;
     private String liveTvPkg;
+    /** Idle time on Home before ClockActivity; 0 is off (config.xml, home_idle_clock_minutes). */
+    private long idleClockMs;
+    private final Runnable showIdleClock = () -> startActivity(new Intent(this, ClockActivity.class));
     private String liveTvAction;
     private String inputAction;
     private String sourcePanelService;
@@ -303,6 +306,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
+        idleClockMs = cfg.homeIdleClockMinutes * MINUTE_MS;
         liveTvAction = cfg.liveTvAction;
         inputAction = cfg.inputAction;
         sourcePanelService = cfg.sourcePanelService;
@@ -431,7 +435,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             public void onChildViewDetachedFromWindow(@NonNull View v) {
             }
         });
-        if (dockRow) grid.addItemDecoration(new DockDecoration(COLUMNS, density, cinematic));
+        if (dockRow) grid.addItemDecoration(new DockDecoration(COLUMNS, density, cinematic, cfg.alwaysShowNames));
         if (animations) {
             int enterAnim = reducedMotion ? R.anim.tile_enter_reduced : R.anim.tile_enter;
             float enterDelay = reducedMotion ? 0f : 0.06f;
@@ -524,6 +528,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
         btnReorder.setVisibility(cfg.reorderButton ? View.VISIBLE : View.GONE);
+        if (!cfg.showNetworkPill) btnWifi.setVisibility(View.GONE);
+        btnLibraryTop = findViewById(R.id.btnLibraryTop);
+        btnLibraryTop.setOnClickListener(v -> {
+            onLibraryRequested();
+            libraryFromTopBar = true;   // closing it goes back to this button, not to the pill after the last row
+        });
+        btnLibraryTop.setVisibility(cfg.libraryButton && cfg.appLibrary ? View.VISIBLE : View.GONE);
+        iconOnlyButtons = cfg.iconOnlyButtons;
+        wifiIconOnly = iconOnlyButtons && cfg.wifiLabelWidth <= 0;
+        if (iconOnlyButtons) {
+            if (cfg.wifiLabelWidth > 0) btnWifi.setMaxWidth(Math.round(cfg.wifiLabelWidth * density));
+            else makeIconOnly(btnWifi);
+            makeIconOnly((TextView) btnSettings);
+        }
         btnSettings.setOnLongClickListener(v -> {
             showSettingsMenu();
             return true;
@@ -550,8 +568,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         btnWifi.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
         btnReorder.setOnKeyListener(pillKeys);
+        btnLibraryTop.setOnKeyListener(pillKeys);
         if (advancedEffects) {
-            for (View button : new View[]{btnInputs, btnWifi, btnReorder, btnSettings}) {
+            for (View button : new View[]{btnInputs, btnWifi, btnReorder, btnLibraryTop, btnSettings}) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
                         .scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f)
                         .setDuration(160).start());
@@ -629,6 +648,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             recreate();
             return;
         }
+        restartIdleClock();
         promptsPaused = false;
         if (rebuildOnResume) {
             tilesReady = false;
@@ -736,9 +756,22 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         });
     }
 
+    /** Any key on Home restarts the countdown to the idle clock. */
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        restartIdleClock();
+    }
+
+    private void restartIdleClock() {
+        root.removeCallbacks(showIdleClock);
+        if (idleClockMs > 0) root.postDelayed(showIdleClock, idleClockMs);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
+        root.removeCallbacks(showIdleClock);
         endReorder();   // Home or another app while reordering keeps the order so far
         if (aerial != null) aerial.pause();   // 释放视频解码器给其它 App
         wallpaperPlayer.stop();
@@ -1096,7 +1129,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere.
+        // Home screen: Back starts the screensaver. Apps can't ask the dream manager themselves (WRITE_DREAM_STATE
+        // is a system permission); SystemUI's Somnambulator can, and does so when started.
+        try {
+            startActivity(new Intent(Intent.ACTION_MAIN)
+                    .setClassName("com.android.systemui", "com.android.systemui.Somnambulator"));
+        } catch (ActivityNotFoundException | SecurityException e) {
+            android.util.Log.w("TvHome", "no screensaver starter on this TV", e);
+        }
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -1106,9 +1146,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         if (appLibrary != null) appLibrary.close();
         if (openPopup != null) openPopup.dismiss();
         libraryFocusPending = false;
+        libraryFromTopBar = false;
         appLibrary = new AppLibraryDialog(this, animations, reducedMotion, adapter::containsPackage, () -> reloadApps(false), () -> {
             appLibrary = null;
             openPopup = null;
+            if (libraryFromTopBar) {
+                libraryFromTopBar = false;
+                btnLibraryTop.requestFocus();
+                return;
+            }
             libraryFocusPending = true;
             grid.post(() -> {
                 if (libraryFocusPending && appLibrary == null && hasWindowFocus() && !isFinishing()) focusLibrary();
@@ -1177,7 +1223,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         }
         View item = (View) card.getParent();
         if (dockRow && position < COLUMNS) {
-            // Dock: park it at the bottom of the screen and show the top shelf for this app.
+            // Dock: park it at the bottom of the screen.
             int decoratedTop = item.getTop() - (int) (6 * density);
             int dy = decoratedTop - grid.getPaddingTop();
             // A 1px mismatch used to start a scroll on every dock move. Only scroll when the row is
@@ -1994,6 +2040,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         } else {
             btnWifi.setText(text);
         }
+        if (wifiIconOnly) {
+            btnWifi.setContentDescription(btnWifi.getText());
+            btnWifi.setText(null);
+        }
         if (festive && diya != null) {
             if (online && flame == 0) flame = 3;   // online some other way (cellular, USB tethering)
             diya.setSteady(steady);
@@ -2001,6 +2051,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         } else {
             btnWifi.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, 0, 0, 0);
         }
+    }
+
+    /** config.xml icon_only_buttons. */
+    private boolean iconOnlyButtons;
+    /** icon_only_buttons without wifi_label_width: the Wi-Fi pill shows no network name. */
+    private boolean wifiIconOnly;
+    /** The app library button in the top bar (library_button). */
+    private View btnLibraryTop;
+    /** The open library came from that button: closing it returns there instead of scrolling to the grid's end. */
+    private boolean libraryFromTopBar;
+
+    /** Turns a labelled top pill into the round TopButtonIcon shape: no text, the icon centred by even padding. */
+    private void makeIconOnly(TextView pill) {
+        pill.setContentDescription(pill.getText());
+        pill.setText(null);
+        pill.setMaxWidth(Integer.MAX_VALUE);
+        int pad = Math.round(10 * density);
+        pill.setPaddingRelative(pad, 0, pad, 0);
+        pill.setCompoundDrawablePadding(0);
+        pill.getLayoutParams().width = Math.round(42 * density);
     }
 
     // ---- festive skin ------------------------------------------------------------------------------
@@ -2361,6 +2431,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         if (moduleCards) addSettingsMenuRow(rows, popup, R.string.module_cards, this::showModuleCards);
+        addSettingsMenuRow(rows, popup, R.string.menu_sleep, () -> {
+            if (!SleepService.sleep()) Toast.makeText(this, R.string.sleep_unavailable, Toast.LENGTH_LONG).show();
+        });
         if (dockRow) addSettingsMenuRow(rows, popup, R.string.dock_edit, this::startDockEdit);
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);

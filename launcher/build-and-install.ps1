@@ -98,6 +98,8 @@ function Enable-Service([string]$Name) {
     ('s=$(settings get secure enabled_accessibility_services); case "$s" in *' + $Name + '*) ;; null|"") settings put secure enabled_accessibility_services ' + $svc + ' ;; *) settings put secure enabled_accessibility_services "$s:' + $svc + '" ;; esac; settings put secure accessibility_enabled 1; echo ' + $Name + ' enabled') |
         & $py -I ..\tools\tv.py --batch
 }
+# The Settings menu's Sleep row; installing the update switched it off, so turn it back on every time.
+Enable-Service 'SleepService'
 if ($InputKeyService) { Enable-Service 'InputKeyService' }
 if ($HomeKeyService) { Enable-Service 'HomeKeyService' }
 Write-Host 'Installed. Press Home on the remote to see it.'

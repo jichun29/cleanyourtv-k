@@ -18,10 +18,17 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     private final Paint edge = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
 
-    /** @param translucent the cinematic shelf's band: the artwork and the glow show through it. */
-    DockDecoration(int dockSize, float density, boolean translucent) {
+    /** Extra band below the tiles for their names (always_show_names), in px. */
+    private final float namesRoom;
+
+    /**
+     * @param translucent the cinematic shelf's band: the artwork and the glow show through it.
+     * @param names       the dock tiles show their names, so the band reaches down over them.
+     */
+    DockDecoration(int dockSize, float density, boolean translucent, boolean names) {
         this.dockSize = dockSize;
         this.density = density;
+        this.namesRoom = names ? 22 * density : 0;
         band.setColor(translucent ? 0x8C121014 : 0xFF141416);
         edge.setStyle(Paint.Style.STROKE);
         edge.setStrokeWidth(density);
@@ -66,6 +73,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         // 1dp edge line, inside the grid; the top and bottom have room.
         float side = Math.max(0f, Math.min(pad, Math.min(rect.left, parent.getWidth() - rect.right) - density));
         rect.inset(-side, -pad);
+        rect.bottom += namesRoom;
         float radius = 26 * density;
         c.drawRoundRect(rect, radius, radius, band);
         c.drawRoundRect(rect, radius, radius, edge);

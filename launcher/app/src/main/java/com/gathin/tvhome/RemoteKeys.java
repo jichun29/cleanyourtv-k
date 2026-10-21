@@ -13,7 +13,7 @@ import java.util.function.ToIntFunction;
 /**
  * Remote buttons that only the stock launcher answered, for InputKeyService and HomeKeyService: app_keys
  * (config.xml or a theme) maps a keycode to the app it opens, as "190:com.google.android.youtube.tv" or
- * "KEYCODE_BUTTON_3:com.google.android.youtube.tv". One map for both services; whichever filters the key first
+ * "KEYCODE_BUTTON_3:com.google.android.youtube.tv", or a scancode as "scan:490:com.wbd.hbomax". One map for both services; whichever filters the key first
  * consumes it.
  */
 final class RemoteKeys {
@@ -49,6 +49,26 @@ final class RemoteKeys {
                 continue;
             }
             if (code > 0) keys.put(code, parts[1].trim());
+        }
+        return keys;
+    }
+
+    /**
+     * scancode -> package, from the "scan:490:com.wbd.hbomax" entries of the same list. For remotes that send
+     * several app buttons as one keycode and tell them apart by scancode (Sony BRAVIA: YouTube, Prime Video and
+     * Disney+ are all keycode 196, scancodes 485, 490 and 491). Find it with `getevent -lt` while pressing the
+     * button: the EV_KEY code, in hex. Other entries are skipped; for a scancode listed twice the last entry wins.
+     */
+    static Map<Integer, String> parseAppScancodes(Iterable<String> entries) {
+        Map<Integer, String> keys = new HashMap<>();
+        for (String entry : entries) {
+            if (entry == null) continue;
+            String[] parts = entry.split(":", 3);
+            if (parts.length != 3 || !parts[0].trim().equals("scan") || parts[2].trim().isEmpty()) continue;
+            String code = parts[1].trim();
+            if (!code.matches("[0-9]{1,6}")) continue;
+            int scan = Integer.parseInt(code);
+            if (scan > 0) keys.put(scan, parts[2].trim());
         }
         return keys;
     }

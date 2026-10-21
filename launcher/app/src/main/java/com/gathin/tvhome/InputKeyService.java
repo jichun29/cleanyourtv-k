@@ -22,6 +22,7 @@ public class InputKeyService extends AccessibilityService {
 
     private int[] inputKeycodes = new int[0];
     private Map<Integer, String> appKeys = Collections.emptyMap();
+    private Map<Integer, String> appScancodes = Collections.emptyMap();
 
     @Override
     protected void onServiceConnected() {
@@ -30,6 +31,7 @@ public class InputKeyService extends AccessibilityService {
         Config config = Config.load(this);
         inputKeycodes = config.inputKeycodes;
         appKeys = RemoteKeys.parseAppKeys(config.appKeys);
+        appScancodes = RemoteKeys.parseAppScancodes(config.appKeys);
     }
 
     private boolean isInputKey(int keyCode) {
@@ -40,6 +42,12 @@ public class InputKeyService extends AccessibilityService {
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
+        // A scancode entry is more specific than any keycode, so it goes first.
+        String scanApp = appScancodes.get(event.getScanCode());
+        if (scanApp != null) {
+            if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) RemoteKeys.launch(this, scanApp);
+            return true;
+        }
         String app = appKeys.get(event.getKeyCode());
         if (app == null && !isInputKey(event.getKeyCode())) return false;
         if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {

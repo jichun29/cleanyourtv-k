@@ -24,10 +24,13 @@ final class WallpaperPlayer {
     private final ImageView image;
     private final List<File> files;
     private final long interval;
+    private final String order;
     private final SharedPreferences preferences;
     private final ExecutorService decoder = Executors.newSingleThreadExecutor();
     private final Random random = new Random();
     private final int width;
+    /** config wallpaper_true_color: ARGB_8888 instead of RGB_565. */
+    private final Bitmap.Config bitmapConfig;
     private final int height;
     private boolean active;
     private boolean closed;
@@ -38,7 +41,16 @@ final class WallpaperPlayer {
         this.root = root;
         files = new ArrayList<>(config.wallpapers);
         interval = config.wallpaperRotationMinutes * 60_000L;
+        bitmapConfig = config.wallpaperTrueColor ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565;
+        order = config.wallpaperOrder;
         preferences = context.getSharedPreferences("wallpaper_rotation", Context.MODE_PRIVATE);
+        // Playback state belongs to one collection. Changing the collection starts from its first
+        // picture instead of resuming a filename that belonged to the previous one.
+        String collection = collectionKey(files);
+        if (!collection.equals(preferences.getString("collection", ""))) {
+            preferences.edit().putString("collection", collection)
+                    .remove("image").remove("changed").apply();
+        }
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         width = metrics.widthPixels;
         height = metrics.heightPixels;
@@ -68,7 +80,7 @@ final class WallpaperPlayer {
     private void showFirst() {
         String previous = preferences.getString("image", "");
         File first = WallpaperRotation.find(files, previous);
-        if (first == null) first = WallpaperRotation.pick(files, previous, random);
+        if (first == null) first = WallpaperRotation.pick(files, previous, order, random);
         while (first != null) {
             Bitmap bitmap = decode(first);
             if (bitmap != null) {
@@ -81,7 +93,7 @@ final class WallpaperPlayer {
                 return;
             }
             files.remove(first);   // unreadable or over 4K: try another, or keep the plain colour
-            first = WallpaperRotation.pick(files, previous, random);
+            first = WallpaperRotation.pick(files, previous, order, random);
         }
     }
 
@@ -106,7 +118,7 @@ final class WallpaperPlayer {
         File selected = WallpaperRotation.find(files, previous);
         long changed = preferences.getLong("changed", 0);
         if (selected == null || WallpaperRotation.due(changed, System.currentTimeMillis(), interval)) {
-            selected = WallpaperRotation.pick(files, previous, random);
+            selected = WallpaperRotation.pick(files, previous, order, random);
         }
         if (selected == null || selected.getName().equals(displayed)) return;
         File next = selected;
@@ -135,6 +147,13 @@ final class WallpaperPlayer {
         });
     }
 
+    /** Names plus sizes: enough to notice a different collection without hashing every image. */
+    private static String collectionKey(List<File> images) {
+        StringBuilder key = new StringBuilder();
+        for (File file : images) key.append(file.getName()).append(':').append(file.length()).append(';');
+        return key.toString();
+    }
+
     private Bitmap decode(File file) {
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -152,7 +171,7 @@ final class WallpaperPlayer {
                 options.inDensity = scale[0];
                 options.inTargetDensity = scale[1];
             }
-            options.inPreferredConfig = Bitmap.Config.RGB_565;
+            options.inPreferredConfig = bitmapConfig;
             return BitmapFactory.decodeFile(file.getPath(), options);
         } catch (Exception | OutOfMemoryError failure) {
             return null;

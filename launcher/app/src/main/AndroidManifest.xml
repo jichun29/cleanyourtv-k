@@ -100,6 +100,14 @@
                 android:resource="@xml/home_key_service" />
         </service>
 
+        <!-- The same clock, started by Home itself after home_idle_clock_minutes without input. -->
+        <activity
+            android:name=".ClockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" />
+
         <!-- Screensaver: pick it in Settings, or `settings put secure screensaver_components
              com.gathin.tvhome/.ClockDream` over adb. -->
         <service
@@ -134,6 +142,20 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/input_key_service" />
+        </service>
+
+        <!-- Settings menu, Sleep: the lock-screen action puts the TV to sleep; see SleepService. -->
+        <service
+            android:name=".SleepService"
+            android:exported="false"
+            android:label="@string/sleep_service_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/sleep_service" />
         </service>
     </application>
 </manifest>

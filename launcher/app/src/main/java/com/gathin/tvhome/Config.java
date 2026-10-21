@@ -68,8 +68,20 @@ final class Config {
     final boolean dockTitle;
     /** The dock as its own row: band, no names, parked low (config.xml dock_row). false: one plain grid. */
     final boolean dockRow;
+    /** Names under every tile, dimmed until focused (config.xml always_show_names); the dock band grows for them. */
+    final boolean alwaysShowNames;
     /** Reorder button in the top bar (config.xml reorder_button); the Settings long-press menu offers it either way. */
     final boolean reorderButton;
+    /** Show the Wi-Fi/Ethernet pill in the top bar (config.xml, show_network_pill). */
+    final boolean showNetworkPill;
+    /** Wi-Fi and Settings pills as round icon buttons, Inputs keeps its label (config.xml icon_only_buttons). */
+    final boolean iconOnlyButtons;
+    /** App library as a round button in the top bar (config.xml library_button); needs app_library. */
+    final boolean libraryButton;
+    /** With icon_only_buttons, the Wi-Fi pill keeps the network name up to this width in dp (0: icon only). */
+    final int wifiLabelWidth;
+    /** Decode wallpapers in 32-bit colour instead of RGB_565 (config.xml wallpaper_true_color). */
+    final boolean wallpaperTrueColor;
     final String vpnApp;
     final boolean showHomeSettingsShortcut;
     /** One line under the clock: CPU, free memory, free storage. Off unless config or a theme turns it on. */
@@ -96,6 +108,11 @@ final class Config {
     final List<File> wallpapers;
     final int wallpaperRotationMinutes;
     final int wallpaperDim;
+    /**
+     * Playback order for a wallpaper collection: {@code sequential} or {@code shuffle}. Missing or
+     * invalid values keep the historical shuffle so existing themes rotate exactly as before.
+     */
+    final String wallpaperOrder;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
     /** Festive skin from a theme (festival, festival_until, greeting, accent_color); {@link Festival#NONE} if none. */
@@ -104,17 +121,21 @@ final class Config {
     final List<RaceWeekend.Race> raceCalendar;
     /** Cinematic top shelf (config.xml, cinematic_home): the focused dock app's artwork behind a larger shelf. */
     final boolean cinematicHome;
+    /** The glow in the focused app's colour behind the dock (config.xml, ambient_glow); false keeps the background plain. */
+    final boolean ambientGlow;
+    /** Minutes Home may sit untouched before the clock screensaver (config.xml, home_idle_clock_minutes); 0 is off. */
+    final int homeIdleClockMinutes;
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, String liveTvPackage,
                    String liveTvAction, Map<String, String> launchActions, Map<String, String> appLabels,
                    Map<String, String> appBanners, String sourcePanelService, String sourcePanelAction, String inputAction,
                    int columns, int rowsBelowDock, boolean animations, boolean advancedEffects,
-                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, String vpnApp,
+                   boolean shamsiDate, String greetingName, boolean moduleCards, boolean reducedMotion, boolean dockTitle, boolean dockRow, boolean reorderButton, boolean showNetworkPill, boolean iconOnlyButtons, boolean libraryButton, int wifiLabelWidth, boolean alwaysShowNames, boolean wallpaperTrueColor, String vpnApp,
                    boolean showHomeSettingsShortcut, boolean showStats, boolean appLibrary, int backgroundColor, int skyIntensity,
                    int[] settingsKeycodes, boolean settingsKeyPanel, boolean wallpaperEnabled, File wallpaper, List<File> wallpapers,
-                   int wallpaperRotationMinutes, int wallpaperDim, boolean overlayApplied,
+                   int wallpaperRotationMinutes, int wallpaperDim, String wallpaperOrder, boolean overlayApplied,
                    Festival festival, int[] inputKeycodes, List<String> appKeys,
-                   List<RaceWeekend.Race> raceCalendar, boolean cinematicHome) {
+                   List<RaceWeekend.Race> raceCalendar, boolean cinematicHome, boolean ambientGlow, int homeIdleClockMinutes) {
         this.inputKeycodes = inputKeycodes;
         this.appKeys = Collections.unmodifiableList(appKeys);
         this.dockApps = Collections.unmodifiableList(dockApps);
@@ -139,6 +160,12 @@ final class Config {
         this.dockTitle = dockTitle;
         this.dockRow = dockRow;
         this.reorderButton = reorderButton;
+        this.showNetworkPill = showNetworkPill;
+        this.iconOnlyButtons = iconOnlyButtons;
+        this.libraryButton = libraryButton;
+        this.wifiLabelWidth = wifiLabelWidth;
+        this.alwaysShowNames = alwaysShowNames;
+        this.wallpaperTrueColor = wallpaperTrueColor;
         this.vpnApp = vpnApp;
         this.showHomeSettingsShortcut = showHomeSettingsShortcut;
         this.showStats = showStats;
@@ -152,10 +179,13 @@ final class Config {
         this.wallpapers = Collections.unmodifiableList(wallpapers);
         this.wallpaperRotationMinutes = wallpaperRotationMinutes;
         this.wallpaperDim = wallpaperDim;
+        this.wallpaperOrder = wallpaperOrder;
         this.overlayApplied = overlayApplied;
         this.festival = festival;
         this.raceCalendar = Collections.unmodifiableList(raceCalendar);
         this.cinematicHome = cinematicHome;
+        this.ambientGlow = ambientGlow;
+        this.homeIdleClockMinutes = homeIdleClockMinutes;
     }
 
     /** The folder the theme tools push into; null when external storage is unavailable. */
@@ -187,6 +217,12 @@ final class Config {
         boolean dockTitle = res.getBoolean(R.bool.dock_title);
         boolean dockRow = res.getBoolean(R.bool.dock_row);
         boolean reorderButton = res.getBoolean(R.bool.reorder_button);
+        boolean showNetworkPill = res.getBoolean(R.bool.show_network_pill);
+        boolean iconOnlyButtons = res.getBoolean(R.bool.icon_only_buttons);
+        boolean libraryButton = res.getBoolean(R.bool.library_button);
+        int wifiLabelWidth = res.getInteger(R.integer.wifi_label_width);
+        boolean alwaysShowNames = res.getBoolean(R.bool.always_show_names);
+        boolean wallpaperTrueColor = res.getBoolean(R.bool.wallpaper_true_color);
         String vpn = res.getString(R.string.vpn_app).trim();
         boolean homeSettings = res.getBoolean(R.bool.show_home_settings_shortcut);
         boolean showStats = res.getBoolean(R.bool.show_stats);
@@ -198,6 +234,8 @@ final class Config {
         int[] inputKeycodes = res.getIntArray(R.array.input_key_keycodes);
         List<String> appKeys = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.app_keys)));
         boolean cinematic = res.getBoolean(R.bool.cinematic_home);
+        boolean ambientGlow = res.getBoolean(R.bool.ambient_glow);
+        int idleClockMinutes = res.getInteger(R.integer.home_idle_clock_minutes);
         boolean applied = false;
 
         File dir = dir(ctx);
@@ -227,6 +265,12 @@ final class Config {
             dockTitle = bool(json, "dock_title", dockTitle);
             dockRow = bool(json, "dock_row", dockRow);
             reorderButton = bool(json, "reorder_button", reorderButton);
+            showNetworkPill = bool(json, "show_network_pill", showNetworkPill);
+            iconOnlyButtons = bool(json, "icon_only_buttons", iconOnlyButtons);
+            libraryButton = bool(json, "library_button", libraryButton);
+            wifiLabelWidth = integer(json, "wifi_label_width", wifiLabelWidth, 0, 300);
+            alwaysShowNames = bool(json, "always_show_names", alwaysShowNames);
+            wallpaperTrueColor = bool(json, "wallpaper_true_color", wallpaperTrueColor);
             vpn = string(json, "vpn_app", vpn);
             homeSettings = bool(json, "show_home_settings_shortcut", homeSettings);
             showStats = bool(json, "show_stats", showStats);
@@ -238,6 +282,8 @@ final class Config {
             inputKeycodes = intArray(json, "input_key_keycodes", inputKeycodes);
             appKeys = stringList(json, "app_keys", appKeys);
             cinematic = bool(json, "cinematic_home", cinematic);
+            ambientGlow = bool(json, "ambient_glow", ambientGlow);
+            idleClockMinutes = integer(json, "home_idle_clock_minutes", idleClockMinutes, 0, 1440);
         }
         // A theme push or reset invalidates choices made on the TV. On first use, remember the
         // current theme without clearing choices from an older launcher version.
@@ -256,6 +302,10 @@ final class Config {
         if (!wallpaperEnabled) wallpaper = null;
         int rotationMinutes = json == null ? 0 : integer(json, "wallpaper_rotation_minutes", 0, 0, 1440);
         int wallpaperDim = json == null ? 0 : integer(json, "wallpaper_dim", 0, 0, 90);
+        String wallpaperOrder = json == null ? WallpaperRotation.ORDER_SHUFFLE
+                : string(json, "wallpaper_order", WallpaperRotation.ORDER_SHUFFLE);
+        // An unknown order must not silently change how an existing collection rotates.
+        if (!WallpaperRotation.validOrder(wallpaperOrder)) wallpaperOrder = WallpaperRotation.ORDER_SHUFFLE;
         List<File> wallpapers = new ArrayList<>();
         if (rotationMinutes > 0 && dir != null && wallpaperEnabled) {
             wallpapers.addAll(WallpaperRotation.images(new File(dir, "wallpapers")));
@@ -288,10 +338,11 @@ final class Config {
                 packageMap(appBanners), panelService,
                 panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), animations, advancedEffects,
-                shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, vpn, homeSettings, showStats, library, background,
+                shamsi, greetingName, moduleCards, reducedMotion, dockTitle, dockRow, reorderButton, showNetworkPill, iconOnlyButtons, libraryButton, wifiLabelWidth, alwaysShowNames, wallpaperTrueColor, vpn, homeSettings, showStats, library, background,
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
-                wallpapers, rotationMinutes, wallpaperDim, applied,
-                festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic);
+                wallpapers, rotationMinutes, wallpaperDim, wallpaperOrder, applied,
+                festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow,
+                Math.max(0, idleClockMinutes));
     }
 
     /**

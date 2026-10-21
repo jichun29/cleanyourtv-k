@@ -53,6 +53,40 @@ public class WallpaperRotationTest {
     }
 
     @Test
+    public void sequentialAdvancesInSortedOrderAndWraps() {
+        List<File> images = Arrays.asList(new File("a.jpg"), new File("b.jpg"), new File("c.jpg"));
+        assertEquals("b.jpg", WallpaperRotation.next(images, "a.jpg").getName());
+        assertEquals("c.jpg", WallpaperRotation.next(images, "b.jpg").getName());
+        assertEquals("a.jpg", WallpaperRotation.next(images, "c.jpg").getName());
+        // A first run, or an image removed from the collection, starts at the first picture.
+        assertEquals("a.jpg", WallpaperRotation.next(images, "").getName());
+        assertEquals("a.jpg", WallpaperRotation.next(images, "gone.jpg").getName());
+        assertEquals("only.jpg", WallpaperRotation.next(
+                Collections.singletonList(new File("only.jpg")), "only.jpg").getName());
+        assertNull(WallpaperRotation.next(Collections.emptyList(), ""));
+    }
+
+    @Test
+    public void pickUsesTheRequestedOrder() {
+        List<File> images = Arrays.asList(new File("a.jpg"), new File("b.jpg"), new File("c.jpg"));
+        Random random = new Random(1);
+        assertEquals("b.jpg", WallpaperRotation.pick(images, "a.jpg", WallpaperRotation.ORDER_SEQUENTIAL, random).getName());
+        assertEquals("a.jpg", WallpaperRotation.pick(images, "c.jpg", WallpaperRotation.ORDER_SEQUENTIAL, random).getName());
+        for (int i = 0; i < 20; i++) {
+            assertNotEquals("a.jpg", WallpaperRotation.pick(
+                    images, "a.jpg", WallpaperRotation.ORDER_SHUFFLE, random).getName());
+        }
+        // Unknown order keeps the historical shuffle rather than failing or blanking.
+        assertNotEquals("a.jpg", WallpaperRotation.pick(images, "a.jpg", "random", random).getName());
+    }
+
+    @Test
+    public void findsTheFirstPictureWhenThePreviousOneIsGone() {
+        List<File> images = Arrays.asList(new File("a.jpg"), new File("b.jpg"));
+        assertEquals("a.jpg", WallpaperRotation.next(images, "deleted.jpg").getName());
+    }
+
+    @Test
     public void findMatchesByName() {
         List<File> images = Arrays.asList(new File("a.jpg"), new File("b.jpg"));
         assertEquals("b.jpg", WallpaperRotation.find(images, "b.jpg").getName());

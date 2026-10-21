@@ -9,6 +9,14 @@ import java.util.Locale;
 import java.util.Random;
 
 final class WallpaperRotation {
+    /** Playback orders persisted in config.json (wallpaper_order). */
+    static final String ORDER_SEQUENTIAL = "sequential";
+    static final String ORDER_SHUFFLE = "shuffle";
+
+    static boolean validOrder(String order) {
+        return ORDER_SEQUENTIAL.equals(order) || ORDER_SHUFFLE.equals(order);
+    }
+
     static List<File> images(File directory) {
         List<File> result = new ArrayList<>();
         File[] entries = directory == null ? null : directory.listFiles();
@@ -35,6 +43,26 @@ final class WallpaperRotation {
         List<File> candidates = new ArrayList<>(images);
         if (candidates.size() > 1) candidates.removeIf(image -> image.getName().equals(previous));
         return candidates.isEmpty() ? null : candidates.get(random.nextInt(candidates.size()));
+    }
+
+    /**
+     * The next picture in the sorted collection, wrapping to the first at the end. The list from
+     * {@link #images(File)} is sorted by filename, so this is a stable order across restarts. A
+     * previous name that is no longer in the collection starts again at the first picture.
+     */
+    static File next(List<File> images, String previous) {
+        if (images.isEmpty()) return null;
+        for (int i = 0; i < images.size(); i++) {
+            if (images.get(i).getName().equals(previous)) {
+                return images.get((i + 1) % images.size());
+            }
+        }
+        return images.get(0);
+    }
+
+    /** Picks the next picture for {@code order}; an unknown order keeps the historical shuffle. */
+    static File pick(List<File> images, String previous, String order, Random random) {
+        return ORDER_SEQUENTIAL.equals(order) ? next(images, previous) : pick(images, previous, random);
     }
 
     static boolean due(long previous, long now, long interval) {
