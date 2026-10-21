@@ -1,0 +1,78 @@
+# TCL Smart TV Pro, US (device G05, product G05_4K_US, board C05, MediaTek MT5889 / MT9615)
+# Android 11 (Google TV), firmware AR2101, software AR68 (built March 2024), 2.7 GB RAM
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-g05-google-tv/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-g05-google-tv/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx (pass it to restore.sh, the default is wrong here).
+# Live TV app: com.tcl.tv (keep it, it also owns HDMI/antenna playback). Keep com.tcl.tvinput,
+# com.tcl.settings, com.tcl.system.server,
+# com.tcl.keyhelp, com.tcl.autopair, com.tcl.tcl_bt_rcu_service (remote) and com.tcl.providers.config.
+# Unlike the G10, com.tcl.ttvs ships enabled here; it carries TCL's BI analytics service.
+#
+# Known quirk, read before replacing the launcher (the one report so far where disabling setupwraith
+# did NOT stick):
+# - With launcherx disabled, com.google.android.tungsten.setupwraith/.RecoveryActivity claims HOME at
+#   priority 1 and Home lands on a black, looping recovery screen. Shell cannot disable that component.
+#   Disabling the whole setupwraith package worked until a reboot, after which this TV had it back in
+#   charge, unlike the MOOR2, QM6K and Chromecast reports where the disable survives.
+#   Recover with: pm enable com.google.android.apps.tv.launcherx; pm enable com.google.android.tungsten.setupwraith
+# - The launcher half is therefore unverified on the G05: launcher/build-and-install.sh will refuse and
+#   roll back while Home resolves to setupwraith (README, Troubleshooting). This list is the debloat half.
+#   Contributed by damonearl (PR #73).
+
+# TCL content, ads and promos
+com.tcl.tv.plus                        # TCL TV+ content app
+com.tcl.channelplus                    # TCL Live FAST channels
+com.tcl.tv.tclchannel                  # TCL Channel, bundles Google Mobile Ads
+com.tcl.waterfall.overseas             # TCL content "waterfall" recommendations
+com.tcl.partnercustomizer              # TCL tweaks to Google TV home rows
+com.tcl.messagebox                     # TCL pushed messages and promos
+com.tcl.usercenter                     # TCL account sign-in
+com.tcl.dashboard                      # "TCL Home" panel, gift box and promos; no remote key uses it
+com.tcl.suspension                     # Quick Panel; the remote's Input key stops working, use the
+                                       # launcher's Inputs menu. HDMI and antenna still play.
+
+# Telemetry and background services
+com.tcl.ttvs                           # TCL BI/awareness/identifier services
+com.tcl.guard                          # TGuard: "health info", device-use tracking, memory cleaner
+
+# Retail demo / store mode
+com.tcl.esticker
+
+# Preloaded apps and services
+com.tcl.ocean.instructions             # e-manual
+com.tcl.gamebar                        # re-enable for the console game-mode overlay
+com.tcl.ui_mediaCenter                 # re-enable to play media from USB drives
+com.tcl.gallery
+android.autoinstalls.config.google.gtvpai
+com.google.android.feedback
+com.google.android.marvin.talkback
+com.google.android.apps.tv.dreamx      # ambient mode screensaver, see the clock screensaver instead
+
+# Unused Google apps (owner's choice)
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.google.android.videos              # Google TV / Play Movies storefront
+
+# Voice, casting and assistants (owner's choice; comment out what you use)
+com.google.android.katniss             # Google Assistant / voice search
+com.tcl.assistant                      # TCL voice service
+com.google.android.tv.assistant        # assistant LED service
+com.tcl.smartalexa                     # Alexa
+com.google.android.apps.mediashell     # Chromecast built-in
+# com.tcl.airplay2                     # AirPlay, together with the next line
+# com.mediatek.AirplayAPK
+
+# Microphone (owner's choice): no far-field mic on this set (odm.tcl.micmanager.enable=false), so
+# the voice remote is the only mic. With the assistants above disabled, also block RECORD_AUDIO:
+#   for p in com.google.android.apps.tv.launcherx com.google.android.gms com.google.android.gsf \
+#            com.google.android.sss.authbridge com.google.android.youtube.tv; do
+#     pm revoke $p android.permission.RECORD_AUDIO; appops set $p RECORD_AUDIO ignore; done
+#   appops set --uid com.android.systemui RECORD_AUDIO ignore   # system-fixed, revoke is refused
+#   cmd appops write-settings
+# Undo: pm grant <pkg> android.permission.RECORD_AUDIO; appops reset <pkg>
+
+# Unclear, left enabled: com.tcl.eva (EvaService, RemoterService), com.mediatek.backgrounddetection,
+# com.tcl.micmanager, com.tcl.externaldevice.update (peripheral updater), smartconnect.tv

@@ -1,0 +1,71 @@
+# TCL 65C735 (reports as "Smart TV Pro", device G05, product G05_4K_GB), Google TV 11 (SDK 30),
+# firmware AR2101, 2.7 GB RAM. France, wired through a USB Ethernet adapter (eth1).
+# Same platform as examples/tcl-g05-google-tv; this list is a little more conservative.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-65c735/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-65c735/debloat.txt com.google.android.apps.tv.launcherx
+# Windows: tools\disable.ps1 / tools\restore.ps1 -TvHost <tv ip> <list> -Stock com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx. Live TV / HDMI: com.tcl.tv + com.tcl.tvinput.
+# USB debugging and USB devices: a USB Ethernet adapter kept working when debugging was switched on,
+# but after a reboot with debugging on the port came up in gadget mode (sys.usb.config=adb,
+# Mstar-udc) and the adapter never appeared as a network interface (LED blinking, no eth1).
+# Switch USB debugging off once you are done to get the port back.
+# Disabling setupwraith (batch 5) survived a reboot on this unit, unlike the G05 report.
+# Remote app buttons: TclPhoneWindowManager turns Netflix (keycode 4062), YouTube (4065) and Prime
+# Video (4099) into broadcasts that only work while launcherx is enabled (re-enabling
+# partnercustomizer does not help). With launcherx disabled these buttons do nothing; an
+# accessibility service that catches those keycodes and starts the app fixes it (verified with the
+# real remote).
+# Disabling the debloat batches alone (launcherx still enabled) left Wi-Fi/Ethernet, HDMI, Live TV,
+# the Input key and app playback working.
+#
+# DO NOT DISABLE (load-bearing): com.tcl.tv, com.tcl.tvinput, com.tcl.settings, com.tcl.system.server,
+# com.tcl.providers.config, com.tcl.initsetup, com.tcl.factory.view, com.tcl.autopair,
+# com.tcl.tcl_bt_rcu_service, com.tcl.keyhelp, com.tcl.inputmethod.international,
+# com.google.android.inputmethod.latin, com.google.android.gms, com.google.android.gsf, Play Store,
+# com.tcl.eva (RemoterService accessibility helper), com.tcl.suspension (source/Quick panel, Input key).
+# Kept by choice: com.tcl.gamebar (game mode, Moonlight is used), com.tcl.UpdatePeripheral (remote fw),
+# com.tcl.t_solo (Bluetooth "listen alone"), com.tcl.android.webview.
+
+# Batch 1 - telemetry and analytics
+com.tcl.ttvs                           # TCL BI/awareness/identifier services
+com.tcl.guard                          # TGuard: device-use tracking, "health info", memory cleaner
+com.google.android.feedback            # "send feedback"
+com.google.android.partnersetup        # partner-app attribution
+
+# Batch 2 - TCL content, ads and promos
+com.tcl.waterfall.overseas             # TCL content recommendations
+com.tcl.partnercustomizer              # TCL rows on the Google TV home
+com.tcl.messagebox                     # pushed messages and promos
+com.tcl.usercenter                     # TCL account
+com.tcl.dashboard                      # "TCL Home" panel, gift box and promos
+com.tcl.tv.tclhome_passive             # pushes TCL content at boot
+com.tcl.esticker                       # retail demo stickers
+
+# Batch 3 - preloaded apps and services not used
+# au.com.stan.and                      # Stan (AU): disabled by the firmware on arrival, shell may not touch it
+tv.wuaki.apptv                         # Rakuten TV
+com.google.android.youtube.tvmusic     # YouTube Music
+com.google.android.play.games          # Play Games
+com.google.android.videos              # Google TV / Play Movies storefront
+com.tcl.gallery
+com.tcl.ui_mediaCenter                 # USB media player (VLC is installed) - re-enable for USB drives
+com.tcl.notereminder                   # notes/reminders
+com.tcl.hearaid                        # hearing test / volume adaptation
+com.google.android.marvin.talkback     # screen reader
+com.google.android.syncadapters.calendar
+com.google.android.onetimeinitializer
+
+# Batch 4 - voice and casting (owner keeps Chromecast and Miracast)
+com.google.android.katniss             # Google Assistant / voice search (mic button)
+com.google.android.tv.assistant        # assistant LED service
+com.tcl.assistant                      # TCL voice service
+com.tcl.smartalexa                     # Alexa
+com.tcl.airplay2                       # AirPlay
+com.mediatek.AirplayAPK                # AirPlay
+
+# Batch 5 - with the launcher in this repo installed (launcher/build-and-install.sh disables launcherx)
+com.google.android.tungsten.setupwraith # first-run wizard; its RecoveryActivity claims HOME. Re-enable
+                                        # before a factory reset (restore.sh does it).

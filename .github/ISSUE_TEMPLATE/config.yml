@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Question or "does it work on my TV?"
+    url: https://github.com/Gathin23/cleanyourtv/discussions/categories/q-a
+    about: Ask in Discussions. Issues are for bugs and TV lists.
+  - name: Show what you built
+    url: https://github.com/Gathin23/cleanyourtv/discussions/categories/show-and-tell
+    about: Screenshots, themes, forks. Launchers and ports also go in SHOWCASE.md by pull request.
+  - name: cleanyour.tv
+    url: https://cleanyour.tv
+    about: The site, with the prompt and the story.

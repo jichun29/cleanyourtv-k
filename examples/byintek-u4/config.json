@@ -1,0 +1,14 @@
+{
+  "dock_apps": [
+    "com.google.android.youtube.tv",
+    "com.netflix.mediaclient",
+    "com.globo.globotv",
+    "com.amazon.amazonvideo.livingroom"
+  ],
+  "hidden_apps": [
+    "com.sdt.app.skysettings"
+  ],
+  "source_panel_service": "com.sdt.app.skysettings/.entry.activity.QuickSourceActivity",
+  "columns": 4,
+  "rows_below_dock": 0
+}

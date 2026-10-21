@@ -1,0 +1,76 @@
+# RCA AI PONT SA (Changhong, device redwood, product ISDB92RC)
+# Android 14, firmware UKNV.260504.001, security patch 2026-05-01
+# Also sold as the realme 100 cm (40-inch) Full HD Smart Android TV: same redwood board, firmware UKNV.260514.001
+# (pranabsarma18, PR #38).
+# 1 GB RAM (MemTotal about 935 MB). Stock launcher: com.google.android.tvlauncher
+# Live TV / tuner: com.mediatek.wwtv.tvcenter (leave it; the Inputs menu uses it)
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/rca-ai-pont/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/rca-ai-pont/debloat.txt com.google.android.tvlauncher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Leave com.homwee.factory (factory menu, see the CHiQ notes), com.mediatek.wwtv.setupwizard (the Live TV
+# channel-scan wizard) and com.homwee.synckey enabled. The last one is a privileged system app (android.uid.system)
+# that starts at boot and talks to the factory. The physical remote and HDMI path
+# go through com.mediatek.tv.service and com.mediatek.tvinput, not through this list.
+#
+# Tested the same day on one set: Home opens, Netflix / Flow / Max / YouTube still
+# resolve, Chromecast (mediashell) comes back after re-enable, HDMI stays in Inputs.
+# Not a multi-day soak.
+#
+# Known quirks on this firmware:
+# - USB debugging alone opens network ADB on port 5555. There is no separate
+#   wireless-debugging toggle.
+# - After a reboot the TV may take a new DHCP address.
+# - com.homwee.chtvmanager ("TV Manager") is a visible Homwee app. It was removed
+#   on the test set with uninstall --user 0, so it is intentionally not listed here.
+# - The default IME is already Gboard. No Baidu-keyboard quirk.
+# - Disabling com.google.android.tvrecommendations does not clear the stock
+#   launcher's poster rows. Those go away only after launcher/ replaces Home.
+#   Disable com.google.android.tvlauncher only once the new home is the default,
+#   or Home can land on a factory activity.
+
+# Homwee store, ads, installers and media extras
+com.homwee.aipont                       # brand portal
+com.homwee.store
+com.homwee.help                         # e-manual
+com.homwee.chinstallapk                 # silent installer
+com.homwee.upgrade                      # re-enable to check for RCA firmware
+com.homwee.dmt.upgrade                  # second factory updater
+android.autoinstalls.config.homwee
+com.homwee.mmp.screenshare              # re-enable to mirror a screen
+com.homwee.multiscreenshare
+com.homwee.mmp.fileexplorer             # re-enable to browse USB storage
+com.homwee.mmp.imageplayer              # re-enable to view photos from USB
+
+# Content recognition, FAST channels and Google TV promo rows
+tv.anoki.acr.anokiacroptin              # automatic content recognition
+com.cltv.fast                           # FAST channel app
+com.google.android.tvrecommendations
+com.google.android.feedback
+com.android.tv.feedbackconsent
+com.google.android.partnersetup
+
+# Setup wizards, assistant and accessibility. Re-enable the ones you use.
+com.google.android.tungsten.setupwraith  # first-run wizard; on this tvlauncher firmware Home works without touching it
+com.google.android.katniss              # re-enable for the microphone button
+com.homwee.alexacontrol                 # Alexa integration; re-enable if you use Alexa (#38)
+com.google.android.tts
+com.google.android.marvin.talkback      # re-enable for TalkBack
+com.google.android.backdrop             # ambient screensaver
+com.google.android.syncadapters.calendar
+com.google.android.tv.remote.service    # Android phone remote; Chromecast is mediashell
+
+# Stock launcher, replaced by launcher/. Left to launcher/build-and-install.sh, which disables it only
+# after the new home is installed and set as default; restore.sh re-enables it.
+# com.google.android.tvlauncher
+
+# Optional: uncomment what you don't use. Left enabled on the test set unless noted.
+# com.google.android.apps.mediashell    # Chromecast; re-enabled, iPhones cast YouTube with it
+# com.google.android.youtube.tv         # re-enabled
+# com.google.android.youtube.tvmusic    # disabled on the test set
+# com.apple.atve.androidtv.appletv      # disabled on the test set
+# com.disney.disneyplus                 # disabled on the test set
+# com.mercadolibre.android.mplay_tv     # disabled on the test set
+# com.amazon.amazonvideo.livingroom     # already disabled at the factory
+# com.google.android.play.games         # already disabled at the factory

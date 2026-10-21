@@ -1,0 +1,73 @@
+# Xiaomi TV Box S 3rd gen (MiTV-AFMU0, codename twilight, Amlogic), Google TV on Android 14 (SDK 34),
+# firmware UKG3.250826.001 / V816.0.11.0.UZFAABX.
+# Fingerprint: Xiaomi/twilight/twilight:14/UKG3.250826.001/V816.0.11.0.UZFAABX:user/release-keys
+#
+# Apply:   TV_HOST=<box ip> tools/disable.sh examples/xiaomi-mitv-afmu0/debloat.txt
+# Undo:    TV_HOST=<box ip> tools/restore.sh examples/xiaomi-mitv-afmu0/debloat.txt
+# Everything is DISABLED, not uninstalled.
+# Tested for one evening so far (Home, grid, D-pad, dock apps) and across one reboot: the disabled list and the
+# default home survive it. Not lived with for days yet.
+#
+# Notes from this box:
+# - The stock home is com.google.android.apps.tv.launcherx. launcher/build-and-install.sh disables it.
+# - setupwraith's RecoveryActivity (HOME priority 1, launcherx 2, a sideloaded launcher 0) takes Home once
+#   launcherx is off, so setupwraith has to go too, and it has to go FIRST. Redone in that order (setupwraith,
+#   then launcherx), Home went straight to the new launcher. This is the same crash-loop xiaomi-tv-a-pro-2026
+#   describes. Re-enable setupwraith to re-pair the remote.
+# - Disabling setupwraith takes the box off Wi-Fi in either order if the network was saved during first setup:
+#   that network belongs to setupwraith, and Android deletes it with the app. The first run here most likely lost
+#   Wi-Fi this way; the redo stayed online because the network had been re-joined by hand in between. Seen on a
+#   second box (V816.0.7.0.UZFAABX): disabling setupwraith alone, launcherx still Home, logged
+#   "WifiConfigManager: Remove all networks for app ... setupwraith" and dropped Wi-Fi and ADB within a second.
+#   The network re-joined in Settings is a new entry owned by android.uid.system and survived disabling
+#   launcherx and dreamx. Check before disabling: tools/tv.py "dumpsys wifi" | grep -o 'cname=[^ ]*'
+# - Leave alone: com.xiaomi.android.tvsetup.partnercustomizer, mitv.service, com.droidlogic*.
+# - With the stock launcher gone, apps without a dock slot just appear in the grid.
+
+# Telemetry and feedback
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.xiaomi.tvqs.overseas.y24           # Xiaomi quality-stats uploader
+com.google.android.feedback
+com.android.tv.feedbackconsent
+
+# PatchWall, content rows, promos, auto-installs
+com.mitv.tvhome.atv
+com.mitv.tvhome.michannel
+com.mitv.tvhome.mitvplus
+com.mitv.tvhome.oemtab
+com.xm.webcontent
+android.autoinstalls.config.soc.amlogic
+
+# Personal choice: voice assistant, phone remote, Mi cast/share (the mic button stops working)
+com.google.android.katniss
+com.google.android.tv.remote.service
+com.xiaomi.mitv.smartshare
+com.xiaomi.wfdsinkhelperservice
+com.xiaomi.mi_connect_service
+
+# Preloaded apps
+com.disney.disneyplus
+com.wbd.hbomax
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.google.android.marvin.talkback
+com.xiaomi.mimusic2
+com.xiaomi.mitv.mediaexplorer
+com.mitv.videoplayer
+com.android.printspooler
+com.mitv.gallery
+
+# Personal choice: preloaded streaming apps, kept enabled here. Uncomment the ones you don't use
+# com.netflix.ninja                    # Netflix
+# com.google.android.youtube.tv        # YouTube
+# com.amazon.amazonvideo.livingroom    # Prime Video
+
+# Optional, uncomment if unused
+# com.google.android.apps.tv.dreamx    # Google ambient screensaver (switch to the Clock dream first)
+
+# Setup wizard, takes Home after the stock launcher is disabled
+com.google.android.tungsten.setupwraith
+
+# Stock Google TV launcher, replaced by launcher/ (build-and-install.sh disables it; listed so restore brings it back)
+# com.google.android.apps.tv.launcherx   # launcher/build-and-install.sh disables the stock launcher itself, after Home has moved

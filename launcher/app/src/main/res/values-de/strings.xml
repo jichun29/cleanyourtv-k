@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Home</string>
+    <string name="inputs">Quellen</string>
+    <string name="wifi">WLAN</string>
+    <string name="settings">Einstellungen</string>
+    <string name="choose_input">Quellen</string>
+    <string name="connected">Verbunden</string>
+    <string name="standby">Standby</string>
+    <string name="not_connected">Kein Gerät</string>
+    <string name="live_tv">Live TV</string>
+    <string name="no_inputs">Keine Quellen gefunden</string>
+    <string name="good_morning">Guten Morgen</string>
+    <string name="good_afternoon">Guten Tag</string>
+    <string name="good_evening">Guten Abend</string>
+    <string name="good_night">Gute Nacht</string>
+    <string name="ethernet">LAN</string>
+    <string name="offline">Offline</string>
+    <string name="not_available">Auf diesem TV nicht verfügbar</string>
+    <string name="cant_open">%1$s lässt sich nicht öffnen</string>
+    <string name="date_format">EEEE, d. MMMM</string>
+    <!-- Two lines next to the clock: the long German weekday and month names do not fit on one. -->
+    <string name="date_format_home">EEEE\nd. MMMM</string>
+    <string name="stats_cpu">CPU %1$d%%</string>
+    <string name="stats_memory">Speicher %1$d MB frei</string>
+    <string name="stats_storage">Speicherplatz %1$s frei</string>
+    <string name="dream_name">Uhr</string>
+    <string name="input_key_service_description">Öffnet die Quellenauswahl, wenn die Input-Taste der Fernbedienung gedrückt wird.</string>
+    <string name="launcher_settings">Launcher-Einstellungen</string>
+    <string name="columns_label">Apps pro Zeile</string>
+    <string name="animations_state">Animationen: %1$s</string>
+    <string name="advanced_effects">Erweiterte Effekte</string>
+    <string name="advanced_effects_state">Erweiterte Effekte: %1$s</string>
+    <string name="advanced_effects_warning">Hebt Kacheln an, vergrößert Symbole und glättet Farbübergänge. Kann den Speicherverbrauch erhöhen; die Wirkung hängt vom TV ab.</string>
+    <string name="follow_theme">Design übernehmen (TV-Auswahl zurücksetzen)</string>
+    <string name="follow_theme_hint">Verwendet Layout und Bewegung des aktuellen Designs oder der integrierten Einstellungen. Ein neues oder zurückgesetztes Design löscht die TV-Auswahl ebenfalls.</string>
+    <string name="tv_settings">TV-Systemeinstellungen</string>
+    <string name="on">Ein</string>
+    <string name="off">Aus</string>
+    <string name="enable">Aktivieren</string>
+    <string name="dock_edit">Dock bearbeiten</string>
+    <string name="dock_edit_hint">Wähle den Dock-Platz, den du ändern willst, und drücke OK. Zurück zum Beenden.</string>
+    <string name="dock_edit_pick_app">Wähle jetzt die App für diesen Platz und drücke OK. Zurück, um einen anderen Platz zu wählen.</string>
+    <string name="reorder">Apps anordnen</string>
+    <string name="reorder_hint">OK hebt eine App an, Pfeiltasten verschieben sie, Zurück legt sie ab. Nochmals Zurück zum Beenden.</string>
+    <string name="reorder_not_saved">Neue Reihenfolge konnte nicht gespeichert werden</string>
+    <string name="app_library">App-Bibliothek</string>
+    <string name="library_empty">Keine startbaren Apps gefunden</string>
+    <string name="library_on_home">Auf dem Startbildschirm</string>
+    <string name="library_add_home">Zum Startbildschirm</string>
+    <string name="library_remove_shortcut">Vom Startbildschirm entfernen</string>
+    <string name="library_open">Öffnen</string>
+    <string name="library_app_info">App-Info</string>
+    <string name="library_save_failed">Verknüpfung konnte nicht gespeichert werden</string>
+    <string name="library_recent">Neu · Zum Startbildschirm</string>
+    <string name="library_hint_add">Drücken: zu Start hinzufügen · Halten: Optionen</string>
+    <string name="library_hint_open">Drücken: öffnen · Halten: Optionen</string>
+    <plurals name="library_app_count">
+        <item quantity="one">%1$d App</item>
+        <item quantity="other">%1$d Apps</item>
+    </plurals>
+    <string name="greeting_with_name">%1$s, %2$s</string>
+</resources>

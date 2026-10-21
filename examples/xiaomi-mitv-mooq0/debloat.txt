@@ -1,0 +1,96 @@
+# Xiaomi Mi TV (MiTV-MOOQ0, codename croods), Android TV 10, firmware QTG3.200305.006.3270
+# MediaTek m7632 chassis, 1.8 GB RAM, Android low-RAM mode on.
+#
+# Also applied cleanly on firmware QTG3.200305.006.5135 (Vietnam retail unit, 2026-10): every package
+# here disabled the same, and the "optional, by choice" mirroring/media apps below were additionally
+# disabled (wfdsinkhelperservice, milinkservice, smartshare, mitvplus, videos, youtube.tvmusic,
+# mediaexplorer, videoplayer) with Netflix/YouTube/VieON still playing afterwards. On that unit the
+# remote's Input/Source button sends KEYCODE_MEDIA_RECORD (kernel KEY_RECORD), not KEYCODE_TV, so the
+# launcher's InputKeyService must handle KEYCODE_MEDIA_RECORD for the Input button to open the menu.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-mooq0/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-mooq0/debloat.txt
+# Everything is DISABLED for user 0, not uninstalled. Comment out any line you want to keep.
+#
+# Kept deliberately, despite names that look like bloat. Checked with `dumpsys package`:
+#   com.xiaomi.android.tvsetup.partnercustomizer  holds BleRcActivity, the Bluetooth remote pairing
+#   com.mediatek.hotkey.dispatcher                the remote's hotkey service, including Source
+#   com.mediatek.tvinput                          serves HDMI 1-3, composite AV and the tuner
+#   com.mediatek.wwtv.setupwizard                 the channel tuning wizard for Live TV
+#   mitv.service, com.xiaomi.mitv.res             core TV service and framework resources
+#
+# Quirk: com.duokan.factorytest also declares the HOME intent, at priority 0, the same as a
+# replacement launcher (the stock launcher sits at priority 2). Disable it and set the home
+# activity explicitly BEFORE disabling com.google.android.tvlauncher, or Home can land on the
+# factory test app. It is in the list below so restore.sh re-enables it.
+#
+# NOTE: com.google.android.tvlauncher is deliberately NOT in this list. launcher/build-and-install.sh
+# disables it only after the replacement launcher is installed and verified as home.
+#
+# Tested on this firmware: HDMI 1-3, composite AV, the tuner, the Bluetooth remote, Gboard,
+# Play Store, Chromecast, Miracast and USB video playback all still work.
+#
+# Notes from a second set on the same firmware (mirhnaz, PR #81):
+# - Live TV (com.mediatek.wwtv.tvcenter) can't be disabled even if you never use the tuner: its
+#   TurnkeyUiMainActivity is also the HDMI/AV window. Hide it in the launcher instead (hidden_apps).
+# - Before disabling com.mitv.dream, point the screensaver elsewhere:
+#   settings put secure screensaver_components com.gathin.tvhome/.ClockDream
+# - After power-on the TV returns to the last source, not the launcher.
+
+# ---- Xiaomi telemetry and analytics ----
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.google.android.tv.bugreportsender           # automatic bug report upload
+com.google.android.feedback                     # crash / feedback reporting
+
+# ---- Xiaomi content, ads and recommendation rows ----
+com.mitv.tvhome.atv                             # PatchWall (.app.PatchWallActivity)
+com.mitv.tvhome.michannel                       # Mi recommendation channels, Firebase + GMS measurement
+com.xm.webcontent                               # Xiaomi promo web content
+com.xiaomi.floatingframe                        # floating promo overlay service
+android.autoinstalls.config.xiaomi.amelie       # partner app auto-install config
+
+# ---- Background services not needed ----
+com.xiaomi.mitv.tvmanager                       # "TV Manager" cleaner / boost / data usage
+com.xiaomi.amazon.alexa                         # Alexa bridge; Google voice search is kept
+com.aha.mitv                                    # dormant duplicate Aha 2.0.8; ahaflix.tv 2.0.22 is kept
+com.mitv.gallery                                # Mi Gallery: MiCloud + Xiaomi market SDK
+com.mitv.dream                                  # Xiaomi MiDream screensaver, Firebase + skyeye monitor
+com.google.android.backdrop                     # Google ambient screensaver, replaced by the Clock dream
+
+# ---- Preloaded apps nobody asked for ----
+com.xiaomi.mitv.handbook                        # on-screen user manual
+com.mitv.tvlock                                 # Xiaomi TV lock / parental password
+com.xiaomo.tv.milegal                           # Xiaomi legal / privacy screens
+com.mstar.android.tv.disclaimercustomization    # vendor disclaimer screen
+com.mediatek.wwtv.webview                       # vendor web view shell
+fusion.android.tv.demo                          # retail store demo loop
+com.xiaomi.mimusic2                             # Mi Music
+com.google.android.play.games                   # Play Games
+
+# ---- Streaming apps not used (per owner's checklist) ----
+com.jio.web.androidtv                           # JioTV
+com.google.android.youtube.tvkids                # YouTube Kids
+
+# ---- Home-screen claimants replaced by launcher/ ----
+# The factory test app also declares the HOME intent, at the same priority as the new launcher.
+# It is disabled so the Home button can never land on it.
+com.duokan.factorytest
+
+# ---- Stock launcher recommendation plumbing (replaced by launcher/) ----
+com.google.android.tvrecommendations
+com.google.android.leanbacklauncher
+com.google.android.leanbacklauncher.recommendations
+
+# ---- Optional, by choice (reported fine on the same firmware, #81); uncomment what you don't use ----
+# com.mitv.tvhome.mitvplus                      # Mi TV+ FAST channels
+# com.xiaomi.mitv.updateservice                 # firmware updates
+# com.google.android.katniss                    # voice assistant (the mic button stops working)
+# com.google.android.apps.mediashell            # Chromecast built-in
+# com.mitv.milinkservice                        # Mi Cast
+# com.xiaomi.mitv.smartshare
+# com.xiaomi.wfdsinkhelperservice               # Miracast sink
+# com.google.android.videos                     # Play Movies & TV
+# com.google.android.youtube.tvmusic
+# com.xiaomi.mitv.mediaexplorer                 # USB media player
+# com.mitv.videoplayer                          # Mi video player

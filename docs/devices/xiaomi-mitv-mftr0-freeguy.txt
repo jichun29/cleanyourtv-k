@@ -1,0 +1,119 @@
+# Xiaomi TV S Pro Mini LED 75, China (MiTV-MFTR0, codename freeguy, MediaTek MT9653/mt5879).
+# Android 14 (SDK 34), firmware OS3.0.101.0.UFTMATV.
+# Checked on a real TV on 2026-10-19, in one running session.
+# Reference launcher code reviewed at upstream 8a8249f (version 2.2).
+# Compatibility notes only: this file intentionally contains NO package-disable entries.
+# No debloat list has been used for several days on this firmware.
+# Stock launcher package, for identification: com.mitv.tvhome.
+#
+# ---- Physical HDMI ports and framework input IDs ----
+# This set has THREE physical HDMI inputs. TvInputManager additionally registers a fourth input;
+# HW8 must not be treated as evidence of a fourth physical connector.
+#
+# Port   TvInputInfo ID                                              Xiaomi INTEGER extra
+# HDMI1  com.mediatek.tvinput/.hdmi.HDMIInputService/HW5               input=23
+# HDMI2  com.mediatek.tvinput/.hdmi.HDMIInputService/HW6               input=24
+# HDMI3  com.mediatek.tvinput/.hdmi.HDMIInputService/HW7               input=25
+# Extra  com.mediatek.tvinput/.hdmi.HDMIInputService/HW8               no physical connector
+#
+# HDMI2 is the eARC port. With a soundbar attached, the framework reported CONNECTED and the
+# launcher showed "Connected" and a green dot. This is appropriate for an audio-only eARC device.
+# No external video player/PC was connected during these checks; video playback was not verified.
+#
+# ---- TV/ATV, AV and DTMB: do not omit the non-HDMI inputs ----
+# Label       TvInputInfo ID                                                Xiaomi source ID
+# TV / ATV    com.mediatek.tvinput/.tuner.TunerInputService/HW1                1 (analogue TV)
+# DTMB        com.mediatek.tvinput/.tuner.TunerInputService/HW0                28 (digital TV)
+# AV          com.mediatek.tvinput/.composite.CompositeInputService/HW2        2 (composite video)
+#
+# The menu label "Composite" is the AV input, not an application/package name. Display it as AV.
+# Both tuner entries need their own routes (or a TV entry with analogue/digital choices); they are
+# TYPE_TUNER inputs, so the unmodified reference launcher's passthrough-input loop does not list them
+# separately. A local test build verified AV, TV/ATV and DTMB menu clicks and their HW2/HW1/HW0 sessions.
+# The default live_tv_package, com.mediatek.wwtv.tvcenter, is not the entry used on this firmware.
+#
+# TV / ATV:
+#   action:    com.xiaomi.mitv.tvplayer.ATV_PLAY
+#   component: com.xiaomi.mitv.tvplayer/.AtvActivity
+#   am start -a com.xiaomi.mitv.tvplayer.ATV_PLAY -n com.xiaomi.mitv.tvplayer/.AtvActivity
+# DTMB:
+#   action:    com.xiaomi.mitv.tvplayer.DTMB_PLAY
+#   component: com.xiaomi.mitv.tvplayer/.dtmb.DTMBActivity
+#   am start -a com.xiaomi.mitv.tvplayer.DTMB_PLAY -n com.xiaomi.mitv.tvplayer/.dtmb.DTMBActivity
+# AV:
+#   action:    com.xiaomi.mitv.tvplayer.EXTSRC_PLAY
+#   component: com.xiaomi.mitv.tvplayer/.ExternalSourceActivity
+#   parameter: INTEGER extra input=2
+#   am start -a com.xiaomi.mitv.tvplayer.EXTSRC_PLAY -n com.xiaomi.mitv.tvplayer/.ExternalSourceActivity --ei input 2
+# All three activities opened and created sessions on HW1/HW0/HW2 respectively. The ATV and DTMB
+# activities select their source internally; their source IDs above are not required launch extras.
+# Channel scanning, RF reception and AV video playback were not tested.
+#
+# ---- Xiaomi signal-source entry ----
+# Package/activity: com.xiaomi.mitv.tvplayer/.ExternalSourceActivity
+# Action: com.xiaomi.mitv.tvplayer.EXTSRC_PLAY
+# Required parameter: INTEGER extra "input", using the values above.
+#
+# Example normal activity launches, run in the TV's ADB shell:
+#   am start -a com.xiaomi.mitv.tvplayer.EXTSRC_PLAY -n com.xiaomi.mitv.tvplayer/.ExternalSourceActivity --ei input 23
+#   am start -a com.xiaomi.mitv.tvplayer.EXTSRC_PLAY -n com.xiaomi.mitv.tvplayer/.ExternalSourceActivity --ei input 24
+#   am start -a com.xiaomi.mitv.tvplayer.EXTSRC_PLAY -n com.xiaomi.mitv.tvplayer/.ExternalSourceActivity --ei input 25
+# Actual TV input sessions were checked and matched HW5/HW6/HW7 respectively.
+#
+# The unmodified reference launcher sends ACTION_VIEW with a passthrough channel URI and MIME
+# vnd.android.cursor.item/channel. No activity handled that intent on this firmware; the launcher's
+# "Not available on this TV" toast does not mean the hardware cannot switch HDMI inputs.
+# Setting input_action alone still sends the channel URI: it does not add Xiaomi's integer extra.
+# The entry details here are adaptation data, not a claim that the current upstream code uses them.
+#
+# ---- Input state labels ----
+# TvInputManager reports CONNECTED=0, CONNECTED_STANDBY=1, DISCONNECTED=2.
+# In the captured session HDMI1/HW5 and HDMI3/HW7 reported 1, HDMI2/HW6 reported 0, and AV/HW2
+# reported 2. The reference menu shows a green dot and "Connected" for 0, "Not connected" for 2,
+# and no state text for 1. It also hides HDMI state when every listed HDMI port reports 0.
+# This explains why AV can show "Not connected" while the unused HDMI rows have no state text.
+# State 1 is the framework's standby state, distinct from DISCONNECTED.
+# The tuner entries reported 0. The local test build hides tuner state text; RF reception was
+# outside the scope of these checks.
+#
+# ---- Xiaomi settings entries ----
+# The generic android.settings.SETTINGS resolves to com.android.tv.settings/.MainSettings (AOSP),
+# rather than Xiaomi's picture/audio/general settings UI.
+#
+# Xiaomi settings:
+#   action:    com.xiaomi.mitv.settings.SETTINGS
+#   component: com.xiaomi.mitv.settings/.entry.MainActivity
+#   am start -a com.xiaomi.mitv.settings.SETTINGS -n com.xiaomi.mitv.settings/.entry.MainActivity
+# Xiaomi Wi-Fi settings:
+#   action:    com.xiaomi.mitv.settings.WIFI_SETTINGS
+#   component: com.xiaomi.mitv.settings/.wifi.MitvWifiActivity
+#   am start -a com.xiaomi.mitv.settings.WIFI_SETTINGS -n com.xiaomi.mitv.settings/.wifi.MitvWifiActivity
+# These entries resolved and opened on the TV. A local test build verified both its top Settings
+# button and the app-grid Settings tile opening Xiaomi settings, plus the Wi-Fi button opening
+# Xiaomi Wi-Fi settings. An override for the top button alone does not reroute the AOSP app tile.
+#
+# ---- App enumeration on this China-market firmware ----
+# The reference AppAdapter queries only MAIN + CATEGORY_LEANBACK_LAUNCHER. Several Xiaomi apps,
+# including com.xiaomi.mitv.settings, instead expose MAIN + CATEGORY_LAUNCHER and are omitted.
+# The manifest's <queries> also needs the regular LAUNCHER intent if a launcher lists these apps.
+# When combining both categories, prefer the TV entry for each package and avoid duplicate tiles.
+# If Xiaomi settings is listed directly, suppress the duplicate AOSP Settings tile when it routes
+# to the same Xiaomi settings destination. Launch each selected entry with its matching category.
+# The default hidden_apps list separately excludes com.mitv.gallery (the photo/gallery app).
+# A local test build combined the categories and cleared that device profile's hidden_apps list;
+# the Xiaomi settings tile, gallery, voice settings and other regular-launcher apps appeared.
+# The Xiaomi settings tile was clicked and its destination verified. Listing an app does not
+# establish that all of that app's own features work on this firmware; disabled packages remain
+# excluded from normal launcher queries and should not be automatically re-enabled.
+#
+# ---- Validation scope ----
+# The local test build displayed exactly HDMI1/2/3 plus AV, TV/ATV and DTMB. All six source routes
+# were checked by normal activity launches and matching TV input sessions. The menu clicks for
+# AV/TV/DTMB and the Settings/Wi-Fi clicks above were also checked. The experimental launcher code,
+# device profile and build workflow are outside this documentation contribution.
+#
+# This is a routing/port-enumeration note, not a system-service disable list. Preserve the signal
+# source application, Xiaomi settings and MTK TV input services. The stock HOME entry was retained.
+# No channel scanning, RF reception, external HDMI picture, AV video playback, cold boot, standby
+# or long-term regression testing was performed for this contribution. These findings should not
+# be generalized to other firmware builds.

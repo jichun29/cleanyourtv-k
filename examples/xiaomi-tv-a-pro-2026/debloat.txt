@@ -1,0 +1,62 @@
+# Xiaomi TV A Pro 75" 2026 (MiTV-MZTU0, codename river, MediaTek), Google TV / Android 14 (SDK 34),
+# firmware UKN1.240806.017.V816.0.25.3.10.URTMIXM. Likely a good start for other 2024+ Xiaomi Google TVs.
+# Live TV app: com.mitv.livetv (set it as live_tv_package and hide it in launcher config.xml).
+# Stock launcher: com.google.android.apps.tv.launcherx (pass it to restore.sh and build-and-install.sh:
+#   STOCK_LAUNCHER=com.google.android.apps.tv.launcherx launcher/build-and-install.sh).
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-tv-a-pro-2026/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-tv-a-pro-2026/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Keep (TV needs them): mitv.service and com.mitv.overseaservice (remote keys, Netflix button, BT remote),
+# com.mediatek.* (extservice, tv.agent, tis, tuners, airplay), com.mitv.livetv, com.mi.bluetooth,
+# com.mitv.setup, com.xiaomi.android.tvsetup.partnercustomizer, com.xiaomi.mitv.scenemode (game mode).
+# Already disabled at the factory: com.xiaomi.floatingframe, com.iwedia.tvinput, atsc/isdb tuners.
+# Default IME is Gboard, no keyboard quirk. 1.8 GB RAM.
+#
+# Google TV 14 quirk (the important one): HOME is resolved by intent priority here and the saved
+# "default home" is ignored. launcherx has priority 2, the setup wizard's RecoveryActivity priority 1,
+# a sideloaded launcher 0. Disable launcherx alone and Home lands on RecoveryActivity, which
+# crash-loops system_server (soft reboots every ~60 s, Wi-Fi drops). Shell may not disable that one
+# activity, so the whole setup wizard package is disabled below; it is only used for first-time setup.
+# Re-enable it (and launcherx) before a factory reset or to get the Google home back: restore.sh does.
+# The firmware re-enables com.netflix.ninja by itself (Netflix button), so don't bother disabling it.
+
+# Xiaomi + Google telemetry
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.xiaomi.tvqs.overseas.y24           # Xiaomi quality-stats uploader (DROPBOX_ENTRY_ADDED, upload log)
+com.google.android.feedback
+
+# PatchWall / "Mi Home" tab, content rows, promos
+com.mitv.tvhome.atv                    # PatchWall
+com.mitv.tvhome.michannel
+com.mitv.tvhome.mitvplus               # Mi TV+ FAST channels
+com.mitv.tvhome.oemtab                 # the "Mi Home" tab injected into Google TV home
+com.xm.webcontent
+android.autoinstalls.config.google.gtvpai   # Play auto-install of partner apps
+
+# Xiaomi background services
+com.xiaomi.mitv.tvmanager              # "TV Manager" cleaner / booster
+com.xiaomi.mitv.updateservice          # firmware updates: re-enable these three to check for one
+com.mitv.upgrader
+com.mediatek.tv.systemupdater
+
+# Google TV setup wizard: only its RecoveryActivity matters after setup, see the quirk above.
+# Disable it before build-and-install.sh, or Home may crash-loop when launcherx goes away.
+com.google.android.tungsten.setupwraith
+
+# Personal choice: Chromecast built-in (AirPlay, Miracast and Mi Cast kept)
+com.google.android.apps.mediashell
+
+# Preloaded apps
+com.google.android.play.games
+com.xiaomi.mimusic2
+
+# Personal choice: preloaded streaming apps not used (YouTube and Netflix kept)
+com.amazon.amazonvideo.livingroom
+com.google.android.youtube.tvmusic
+
+# Optional, uncomment if unused
+# com.google.android.videos            # Google TV / Play Movies app
+# com.google.android.apps.tv.dreamx    # Google ambient screensaver (switch to the Clock dream first)

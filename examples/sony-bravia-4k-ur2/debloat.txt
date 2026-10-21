@@ -1,0 +1,52 @@
+# Sony BRAVIA 4K UR2 (device BRAVIA_UR2_4K, MediaTek)
+# Android 10 (Android TV, API 29), firmware BRAVIA_UR2_4K_UC-user 10 QTG3.200305.006.S97 662301
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/sony-bravia-4k-ur2/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/sony-bravia-4k-ur2/debloat.txt
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.tvlauncher (the restore.sh default is correct).
+# Live TV / tuner app: com.sony.dtv.tvx (set it as live_tv_package in the launcher's config.xml).
+# Keep the com.sony.dtv.tvinput.* services, com.sony.dtv.braviasync*, com.sony.dtv.tvapi,
+# com.sony.dtv.sonysystemservice and the Sony settings apps: they drive HDMI, the tuner, Bravia Sync
+# and the remote.
+# Already disabled at the factory: com.sony.dtv.b2b.vendorprotocol, com.sony.dtv.b2b.softap,
+# screnmirroring.com.
+#
+# Applied one afternoon with the dock set to Netflix, YouTube, Disney+, ZEE5. Not yet lived with
+# for weeks; if something breaks, re-enable it with `pm enable <package>` and please report it.
+
+# tracking / ads / recommendations
+tv.samba.ssm                                   # Samba TV (ACR viewing data)
+com.qterics.da.product
+com.sony.dtv.da.service
+com.sonyericsson.idd.agent
+com.sony.dtv.promos
+com.sony.dtv.sonyselect
+com.google.android.tvrecommendations           # only the stock launcher uses it
+com.google.android.feedback
+
+# demo / shop mode
+com.sony.dtv.demosupport
+com.sony.dtv.demosystemsupport
+com.sony.dtv.multiscreendemo
+
+# voice assistant (removes the remote's mic search; skip these three to keep it)
+com.google.android.katniss
+com.google.android.tv.assistant
+com.sony.dtv.assistantadapter
+
+# Chromecast built-in (skip to keep casting)
+com.google.android.apps.mediashell
+
+# preloaded apps, disabled by choice
+com.onehundredpics.onehundredpicsquiz
+air.com.vudu.air.DownloaderTablet
+com.sling
+com.fox.foxone
+com.cbs.ott
+com.google.android.youtube.tvunplugged
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.google.android.videos
+com.apple.atve.sony.appletv

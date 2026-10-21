@@ -1,0 +1,50 @@
+# Sony BRAVIA 4K VH2 (device BRAVIA_VH2, KD-55X80J, MediaTek), EU firmware
+# Android 12 (Google TV, API 31), build BRAVIA_VH2_EU-user 12 STT2.230505.001.S136 682241
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/sony-bravia-4k-vh2/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/sony-bravia-4k-vh2/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx (Google TV). Pass it to restore.sh as above.
+# Live TV / tuner app: com.sony.dtv.tvx (set it as live_tv_package in the launcher's config.xml and hide it).
+# Keep the com.sony.dtv.tvinput.* services, com.sony.dtv.braviasync*, com.sony.dtv.tvapi,
+# com.sony.dtv.sonysystemservice, imeproxy, settingsprovider, systemupdate/update (firmware), the Sony
+# settings apps and all com.mediatek.*: they drive HDMI, the tuner, Bravia Sync, updates and the remote.
+# Kept by owner's choice: voice assistant (katniss, voicesearch, assistantadapter), Chromecast built-in
+# (mediashell) and firmware updates.
+# Already disabled at the factory: com.sony.dtv.promos, com.sony.dtv.b2b.vendorprotocol,
+# com.sony.dtv.b2b.softap, com.apple.atve.sony.appletv, the my5/itv/ard/all4/iplayer/sounds launchers,
+# com.youview.poa, de.hdplus.tvapp.androidtv, com.sony.dtv.seeds.iot, com.sonypicturescore.
+# Not in this list, so restore.sh leaves them as they are.
+#
+# Live TV in the launcher: set live_tv_package to com.sony.dtv.tvx and hide it; Inputs lists HDMI 1-4 and
+# AV from the TV input framework. Launcher installed with the Input-button service (INPUT_KEY_SERVICE=1).
+# Applied one afternoon on a KD-55X80J with the dock set to Stremio, Netflix, SmartTube, OTT Navigator.
+# Not yet lived with for weeks; if something breaks, re-enable it with `pm enable <package>` and please
+# report it. launcherx was left enabled, since Home already resolved to the new launcher once the setup
+# wizard was disabled.
+
+# ACR viewing tracker
+tv.samba.ssm                                   # Samba TV fingerprints what's on screen
+tv.samba.ssm.ui
+
+# telemetry and remote support
+com.qterics.da.product
+com.sony.dtv.da.service
+com.sonyericsson.idd.agent
+com.sony.dtv.sonybugreportsys
+com.google.android.feedback
+
+# demo / shop mode
+com.sony.dtv.demosupport
+com.sony.dtv.demosystemsupport
+com.sony.dtv.multiscreendemo
+
+# preloaded apps
+com.sony.dtv.customersupport                   # Help tile
+com.sony.dtv.smarthelp
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+
+# Google TV setup wizard: claims HOME and takes over once the stock launcher is disabled
+com.google.android.tungsten.setupwraith

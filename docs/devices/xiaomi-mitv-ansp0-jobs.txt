@@ -1,0 +1,93 @@
+# Xiaomi MiTV-ANSP0 (小米电视5 Pro 65"), China (codename jobs, Amlogic).
+# Android 9 (SDK 28), firmware 23.6.5.3226 (build PPR1.180610.011), 4 GB RAM, 54 GB /data.
+# UI reports 1920x1080 at 320 dpi.
+# Checked on a real TV on 2026-10-20, with the reference launcher (version 2.2) as Home.
+# Compatibility notes only, plus the debloat list next to this file in examples/xiaomi-mitv-ansp0/.
+#
+# Everything below was read with tools/tv.py on a tv whose overlay has no Google services at all.
+
+# ---- Home: PatchWall must stay enabled ----
+# Stock launcher: com.mitv.tvhome (version 3.50.1621), HOME activity .MainActivityUserMode.
+# Its HOME filter is priority 0 and the reference launcher's is priority 0 too, so the tie is settled
+# by the preferred activity:
+#
+#   cmd package set-home-activity --user 0 com.gathin.tvhome/.MainActivity
+#
+# While com.mitv.tvhome is enabled that preference holds, survives a reboot, and PatchWall is never
+# shown. Disabling com.mitv.tvhome makes HOME resolve to
+# com.android.tv.settings/.system.FallbackHome even though its filter is priority -1000, and the TV
+# shows a black screen: pressing Home does nothing visible, and set-home-activity still reports
+# "Success" while resolve-activity keeps answering FallbackHome. enable--user 0 com.mitv.tvhome and
+# set the preference again to recover. launcher/build-and-install.sh's own handover check catches
+# this and rolls back to PatchWall (it reported "Home resolves to
+# com.android.tv.settings/.system.FallbackHome" on the first attempt here).
+
+# ---- Settings ----
+# Unlike the MiTV-ASTP1 CN build, the plain framework settings intents DO resolve here:
+#   android.settings.SETTINGS       -> com.android.tv.settings/.MainSettings
+#   android.settings.WIFI_SETTINGS  -> com.android.tv.settings/.connectivity.NetworkActivity
+# com.xiaomi.mitv.settings is present as well (the vendor UI with its own
+# com.xiaomi.mitv.settings.* actions), but the launcher needs no settings_* fallback keys.
+# android.settings.TV_SETTINGS resolves to nothing.
+
+# ---- Inputs: listed, but switching needs a vendor extra ----
+# TvInputManager registers (all under com.droidlogic.tvinput):
+#   HDMI1  com.droidlogic.tvinput/.services.Hdmi1InputService/HW5   (state 1 = connected)
+#   HDMI2  com.droidlogic.tvinput/.services.Hdmi2InputService/HW6
+#   HDMI3  com.droidlogic.tvinput/.services.Hdmi3InputService/HW7
+#   AV     com.droidlogic.tvinput/.services.AV1InputService/HW1
+#   ADTV   com.droidlogic.tvinput/.services.ADTVInputService/HW16   (state 0)
+#
+# Nothing answers ACTION_VIEW on TvContract's passthrough channel URI ("No activities found" for
+# content://android.media.tv/passthrough/), so the launcher's Inputs rows list the ports and do
+# nothing when clicked. com.xiaomi.mitv.tvplayer registers no URI scheme at all; it switches sources
+# with explicit actions and an INTEGER extra (same shape as the MiTV-MFTR0 Android 14 notes):
+#   HDMI1  am start -n com.xiaomi.mitv.tvplayer/.ExternalSourceActivity --ei input 23   [verified]
+#   HDMI2  input 24, HDMI3 input 25, AV input 2    [values from the MFTR0 notes, not re-tested here]
+#   TV/ATV com.xiaomi.mitv.tvplayer.ATV_PLAY  -> .AtvActivity
+#   DTMB   com.xiaomi.mitv.tvplayer.DTMB_PLAY -> .dtmb.DTMBActivity
+# Starting ExternalSourceActivity without the extra also switches to a source (the last one used), so
+# wiring `input_action` to EXTSRC_PLAY would send every HDMI row to the same port - do not.
+# Live TV via the launcher's live_tv_package/live_tv_action = com.xiaomi.mitv.tvplayer +
+# com.xiaomi.mitv.tvplayer.ATV_PLAY works.
+
+# ---- Kids home (儿童桌面) is exported and can be reached from a third-party Home ----
+# The 儿童 channel in PatchWall is an activity inside com.mitv.tvhome, not a separate app:
+#   com.mitv.tvhome.business.kiddesk.KidsHomeActivity        <- android.intent.action.ENTER_KIDS_MODE
+#   com.mitv.tvhome.business.kiddesk.KidsMultipleTabsActivity <- android.intent.action.ENTER_KIDS_MULTIPLE_TABS
+#   com.mitv.tvhome.ChannelActivity                          <- VIEW mitv://video/channel (exported=true)
+# com.mitv.tvhome has targetSdkVersion=23, so a component with an intent-filter and no explicit
+# android:exported defaults to exported=true and a third-party app can start it. MainActivityUserMode
+# declares ENTER_KIDS_MODE too, but that one is guarded by com.mitv.tvhome.permission.HOME_STATE, so an
+# external app must target the explicit KidsHomeActivity component rather than the bare action.
+#
+# This is what makes the kids section usable next to a replacement Home: PatchWall's own home activity
+# drops straight back when it is not the preferred Home, but KidsHomeActivity stays in the foreground
+# (verified over a minute of sampling while com.gathin.tvhome owned Home). A ~12 KB bridge app whose
+# only launcher activity starts that component, placed on the new Home, opens the kids section with one
+# remote click and leaves Home working. The screen is the same one as before: 我的 / DK百科 / 成长VIP /
+# 儿歌 / 动画 / 儿童影院 / 绘本馆 / 互动思维 / 英文分级阅读, with 家长中心 and 退出 in the top bar.
+#
+# The entitlement behind it (儿童成长VIP) is account-side. With no active membership the 我的 tab says
+# 会员已过期 and opening a show raises a renewal dialog with a coupon; the TV's own requests to
+# bss.ptmi.gitv.tv succeed, so this is the account's state, not a missing package. Keep
+# com.xiaomi.mitv.pay / com.xiaomi.mitv.payment enabled or the renewal cannot be completed on the set.
+
+# ---- ADB ----
+# ro.adb.secure=1. Network ADB on 5555 closes on every reboot and has to be re-enabled in
+# Settings -> 账号与安全 -> ADB 调试. It survived all the work above, but not the reboot test.
+
+# ---- Sideloading ----
+# system setting `pi_config` carries Xiaomi's install blacklist for this firmware:
+# "根据互联网电视相关要求，应用存在违规功能，禁止安装。" ("app has prohibited features, install
+# blocked"), with app_pi_control / app_pi_install_black_list / app_pi_strong_install_black_list all
+# true. It names ~100 packages (IPTV players, third-party launchers, browsers, app stores). A plain
+# adb install of a blacklisted package is refused by the package installer. The reference launcher
+# (com.gathin.tvhome) installed normally; com.dangbeimarket (当贝市场) and a FongMi build
+# (com.hisen.android.tv) are installed and working.
+
+# ---- App discovery ----
+# LEANBACK_LAUNCHER: only the four apps the owner kept (FongMi, bilibili TV, Dangbei Market, QQ Music
+# TV). CATEGORY_LAUNCHER additionally has com.mitv.tvhome, com.xiaomi.mitv.settings,
+# com.xiaomi.mitv.smartshare and com.xiaomi.mitv.systemui. On a set with few TV apps the grid is
+# therefore empty until something else is installed.

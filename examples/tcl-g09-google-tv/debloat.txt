@@ -1,0 +1,54 @@
+# TCL Smart TV Pro, UK firmware (device G09, product G09_4K_GB, Amlogic T5M), used in Brazil
+# Android 12 (Google TV), firmware STT2.230203.001 AS24, 2 GB RAM
+# Same firmware family as examples/tcl-g10-google-tv.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-g09-google-tv/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-g09-google-tv/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx. Live TV app: com.tcl.tv (also owns HDMI playback).
+# Keep com.tcl.tvinput, com.tcl.suspension (Input/source menu), com.tcl.dashboard, com.tcl.autopair,
+# com.tcl.systemserver (mic hotkeys), com.tcl.providers.config and com.tcl.initsetup (channel install).
+# Firmware updates come through Play Services (gms SystemUpdatePanoActivity); there is no TCL OTA package.
+
+# TCL telemetry and analytics
+com.tcl.ttvs                           # TCL BI/awareness/identifier services
+com.tcl.logkit                         # log capture and upload
+com.tcl.interactive                    # TCL TIAS background service
+com.google.android.feedback
+
+# TCL content, ads and promos
+com.tcl.channelplus                    # TCL Live FAST channels, also removes them from Live TV
+com.tcl.waterfall.overseas             # TCL content "waterfall" recommendations
+com.tcl.tv.tclhome_passive             # pushes TCL content to the home screen at boot
+com.tcl.partnercustomizer              # TCL tweaks to Google TV home rows
+com.tcl.messagebox                     # TCL pushed messages and promos
+android.autoinstalls.config.google.gtvpai  # partner auto-installs
+com.tcl.smartlink.core                 # bundles a silent app installer
+
+# Background services
+com.tcl.guard                          # TGuard: device-use tracking, memory cleaner
+com.tcl.usercenter                     # TCL account sign-in
+com.tcl.exhibit                        # store demo
+com.tcl.esticker                       # store demo stickers
+com.tcl.hotelmenu                      # hotel mode
+com.google.android.tv.remote.service   # Google TV phone-app remote
+
+# Preloaded apps
+com.tcl.ocean.instructions             # e-manual
+com.tcl.repairguide
+com.tcl.gamebar                        # re-enable for the console game-mode overlay
+com.tcl.UpdatePeripheral               # re-enable to update a TCL soundbar
+com.tcl.hearaid                        # hearing test / volume adaptation
+com.google.android.marvin.talkback
+com.google.android.play.games
+com.google.android.videos              # Google TV / Play Movies storefront
+com.google.android.youtube.tvmusic
+com.google.android.apps.tv.dreamx      # ambient screensaver; use the launcher's Clock screensaver
+
+# Off by choice
+com.google.android.apps.mediashell     # Chromecast built-in
+com.tcl.ui_mediaCenter                 # USB media player
+
+# Second Home claimant: disable it once the new launcher is Home (disable.sh checks the Wi-Fi owner first)
+com.google.android.tungsten.setupwraith  # setup wizard, claims HOME after launcherx is disabled

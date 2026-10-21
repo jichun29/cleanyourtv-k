@@ -1,0 +1,60 @@
+# Xiaomi TV S Pro 100 Mini LED 2025 (小米电视 S Pro 100, L100MB-SP, MiTV-MFFU0, codename finch;
+# China-market firmware), Android 14 (SDK 34), firmware OS3.0.115.0.UFFMATV (HyperOS 3),
+# MediaTek mt5877, 4 GB RAM.
+# Disabled on 2026-10-20 in batches; after each batch Home, Xiaomi settings, HDMI 1 and the
+# screensaver were checked. All but com.xiaomi.tv.gallery (added last) were also checked after a reboot.
+# Stock launcher: com.mitv.tvhome (HOME activity .MainActivityUserMode) - KEEP IT ENABLED, see
+# "Home" below. This list is debloat only.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-mffu0/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-mffu0/debloat.txt com.mitv.tvhome
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Notes from this firmware:
+# - Home: unlike MiTV-ANSP0, a sideloaded launcher cannot become Home here. HyperOS drops the HOME
+#   activities of ordinary (non-system) apps from resolution, and it refuses them as the preferred
+#   home, so `cmd package set-home-activity` does not help. With com.mitv.tvhome disabled, Home
+#   lands on com.xiaomi.mitv.settings/.entry.FallbackHome, a black screen.
+# - Network ADB (port 5555) closes on every reboot; re-enable it in
+#   Settings -> 账号与安全 (Account & Security) -> ADB 调试 after each power cycle.
+# - Not touched: mitv.service, com.xiaomi.mitv.tvplayer (input switching, HDMI/AV/DTMB),
+#   com.mediatek.* (TV inputs), com.xiaomi.mitv.settings (the only full settings UI),
+#   com.xiaomi.mitv.smartpanel (the Menu-button panel), com.mitv.overseaservice and com.mi.bluetooth
+#   (Bluetooth remote), com.sohu.inputmethod.sogou.tv (the only keyboard), the app store,
+#   com.xiaomi.account, com.mitv.codec.update, com.xiaomi.mitv.mediaexplorer (USB/media browser).
+# - Kept by choice: XiaoAI voice (com.xiaomi.voicecontrol, com.xiaomi.wakeupservice), casting
+#   (com.xiaomi.miplay, com.xiaomi.mitv.smartshare, com.xiaomi.mi_connect_service,
+#   com.xiaomi.hyper_connect.tv), Mi Home (com.xiaomi.smarthome.tv), firmware updates
+#   (com.xiaomi.mitv.upgrade), the Hyper screensaver (com.xiaomi.mitv.hyper.screensaver, com.xiaomi.tweather).
+# - A black screen right after a reboot with an HDMI-CEC set-top box plugged in is the box's CEC
+#   "active source" switching the TV to its port (HdmiCecLocalDeviceTv), not this list. Home brings
+#   the TV back; turning HDMI device control (CEC) off in the input settings stops it.
+# - Do not disable com.xiaomi.mitv.tvmanager ("TV Manager"): XiaoAI's "open <app>" runs through its
+#   com.xiaomi.aicr.action.provider. Without it XiaoAI answers "OK" and nothing opens (logcat:
+#   "Failed to find provider info for com.xiaomi.aicr.action.provider"). It was disabled here at first.
+# - MemAvailable went from about 1.57 GB to 1.77 GB with the stock launcher still running (measured
+#   while TV Manager was also disabled).
+# - A firmware update may re-enable some of these; apply the list again afterwards.
+# Input routes, Xiaomi settings intents and app discovery on this platform:
+# docs/devices/xiaomi-mitv-mftr0-freeguy.txt.
+
+# Xiaomi telemetry / diagnostics / cloud control
+com.miui.analytics                      # OneTrack analytics SDK host
+com.miui.tv.analytics                   # TV usage statistics, ~100 MB resident
+com.miui.misightservice                 # MiSight remote diagnostics and log upload
+com.xiaomi.tvqs                         # quality/performance reporting, ~86 MB resident
+com.mitv.cloudcontrol                   # cloud control: remote configuration pushes
+
+# Ads / shopping / promoted content
+com.duokan.videodaily                   # short-video promos; bundles the Xiaomi ad SDK and a P2P upload service
+com.mitv.shoplugin                      # TV Taobao shopping plugin
+com.xiaomi.mitv.shop                    # Xiaomi store
+com.xm.webcontent                       # webview container for promotions
+com.xiaomi.tv.gallery                   # "Pictorial" wallpaper app, ships ad classes; preinstalled to /data,
+                                        # the Hyper screensaver kept starting with it disabled
+
+# Features not used (off by choice)
+com.xiaomi.aitranslate                  # AI subtitle translation, ~117 MB resident
+com.mitv.alarmcenter                    # reminders/alarms: re-enable it if you set alarms with XiaoAI voice
+com.xiaomi.mitv.health                  # MiHealth
+com.xiaomi.gamecenter.sdk.service.mibox # game center SDK

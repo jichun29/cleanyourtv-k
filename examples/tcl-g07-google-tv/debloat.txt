@@ -1,0 +1,97 @@
+# TCL Smart TV (reports as "Smart TV"; device G07, product G07_4K_GB_NF, Realtek RTD2851A), Google TV on
+# Android 11 (SDK 30), build RP1A.200622.001 AR20, security patch 2025-12-05, 2 GB RAM. Same package family
+# as the G05 (Quick Panel, waterfall, ttvs, TCL Live) plus the 43C645 extras (useragreement, TCL webview,
+# tclhome_passive).
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-g07-google-tv/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-g07-google-tv/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Tested 2026-10-20 on a real unit, applied in six batches with screenshots between them: Wi-Fi, Home, the Input
+# key's source panel, Netflix, YouTube, Live TV and HDMI (from the launcher's Inputs menu) all kept working, and
+# setupwraith, launcherx and dreamx stayed disabled after a reboot (unlike the G05). Launcher works.
+# Stock launcher: com.google.android.apps.tv.launcherx; setupwraith's RecoveryActivity claims HOME at priority 1
+# once it is gone. The Wi-Fi saved at setup belonged to android.uid.system, not setupwraith, so disabling
+# setupwraith kept the network.
+#
+# Also tested 2026-10-19 on a second unit, UK firmware used in Brazil, build RP1A.200622.001 AR17, with the
+# launcher as Home and through a reboot. Two things differ from AR20 there:
+# - The Wi-Fi saved during first setup belonged to setupwraith, so disabling it made Android delete the
+#   network and the TV dropped off Wi-Fi (and ADB). Pick the network again in Settings > Network; Settings
+#   then owns it and it survives reboots. tools/disable.sh now checks the owner first and skips setupwraith
+#   while it owns the network.
+# - The adb shell may not write Android/data, so tools/theme.sh has to go through the launcher's
+#   ThemeProvider (it falls back to it on its own when the plain copy is refused).
+# TvInputManager reports AV as connected with nothing plugged in. com.tcl.notereminder was enabled on that
+# unit, not disabled at the factory, so it is listed below.
+#
+# Remote (IR, /dev/input/event0 "mtkinp"; scancodes from getevent with the real remote):
+# - Input (471, TV_INPUT) goes to TclPhoneWindowManager.startQuickPanelService, so it keeps working without
+#   launcherx and needs no InputKeyService.
+# - Gear (561, TCL_SET) became launcherx's quick settings panel, so it does nothing once launcherx is off.
+#   HOME_KEY_SERVICE=1 with settings_key_scancodes 561 in config.xml brings it back.
+# - Netflix (566, TCL_NETFLIX) and YouTube (569, TCL_YOUTUBE) are broadcasts that only launcherx answers, so
+#   they do nothing once it is off. An accessibility service that matches those scancodes and starts the app
+#   fixes both (verified with the real remote).
+# Remote (Bluetooth, second AR20 unit, France; /dev/input/event3, vendor 0x0417 product 0x0304, Generic.kl):
+# - Its buttons send other codes, and settings_key_scancodes 561 does nothing for them. Gear is KEY_FORWARDMAIL
+#   (233, TCL_SET) and arrives as keycode 4077; Prime Video is HID usage 0x000c005f and arrives as keycode 4099.
+#   `getevent -lt` while pressing a button tells the two remotes apart (event0 mtkinp or event3).
+# - With HOME_KEY_SERVICE=1, this config.xml brought back Gear, Netflix, YouTube and Prime Video (verified with
+#   the real remote): settings_key_keycodes 4077, and app_keys KEYCODE_TCL_NETFLIX:com.netflix.ninja,
+#   KEYCODE_TCL_YOUTUBE:com.google.android.youtube.tv, 4099:com.amazon.amazonvideo.livingroom.
+# tools/b64push.py worked here (md5 match). Screenshots of Live TV and HDMI are 0 bytes; Netflix's are black.
+#
+# DO NOT DISABLE: com.tcl.tv (Live TV, HDMI playback), com.tcl.tvinput (tuner, HDMI and AV inputs),
+# com.tcl.suspension (Quick Panel, also the Input key's source panel), com.tcl.keyhelp (remote virtual keys),
+# com.tcl.autopair, com.google.android.tv.remote.service, com.tcl.inputmethod.international (the keyboard),
+# com.tcl.settings, com.tcl.system.server, com.tcl.providers.config, com.tcl.initsetup, com.tcl.factory.view,
+# com.tvos (framework resources).
+# Unclear, left enabled: com.tcl.micmanager, com.google.android.apps.nbu.smartconnect.tv.
+# Kept by choice: Netflix, YouTube, Chromecast (com.google.android.apps.mediashell).
+# Already disabled at the factory: au.com.stan.and, com.google.android.videos, com.tcl.notereminder,
+# com.tcl.smartalexa, tv.wuaki.apptv.
+
+# 1. Telemetry and analytics
+com.tcl.ttvs                               # TCL BI/analytics, also TCL's firmware updater (comment this line out to keep updates)
+com.tcl.guard                              # TGuard device-use tracking, cleaner
+com.tcl.useragreement                      # privacy-agreement proxy for ttvs business data
+com.google.android.feedback
+com.google.android.partnersetup
+com.google.android.onetimeinitializer
+
+# 2. Content and ad services
+com.tcl.waterfall.overseas                 # content "waterfall" recommendations
+com.tcl.channelplus                        # TCL Live FAST channels (a TV input)
+com.tcl.dashboard                          # TCL Home panel, promos
+com.tcl.partnercustomizer                  # TCL tweaks to Google TV home rows
+com.tcl.messagebox                         # pushed messages and promos
+com.tcl.notereminder                       # reminders fed by the message box (already off on AR20)
+com.tcl.tv.tclhome_passive                 # TCL home content, starts at boot
+com.tcl.usercenter                         # TCL account
+com.tcl.esticker                           # retail-demo sticker
+com.tcl.hotelmenu                          # hotel-mode portal
+android.autoinstalls.config.google.gtvpai  # partner app auto-installs
+
+# 3. Background services (off by choice)
+com.tcl.MultiScreenInteraction_TV          # MagiConnect
+com.tcl.miracast                           # screen mirroring (Chromecast kept)
+com.google.android.katniss                 # Google Assistant / voice search (mic button)
+com.tcl.assistant                          # TCL voice service
+com.google.android.tv.assistant            # assistant LED service
+com.tcl.t_solo                             # T-Solo Bluetooth "listen alone"
+com.tcl.android.webview                    # TCL support browser (the system WebView is Google's)
+com.google.android.syncadapters.calendar
+
+# 4. Preloaded apps (off by choice)
+com.amazon.amazonvideo.livingroom          # Prime Video
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.tcl.ui_mediaCenter                     # USB media player
+com.tcl.gallery
+com.iqiyi.i18n.tv                          # partner auto-install
+
+# 5. Launcher handover (setupwraith's RecoveryActivity claims HOME once launcherx is off; the install
+#    script disables launcherx itself). Ambient mode replaced by the launcher's Clock screensaver.
+com.google.android.tungsten.setupwraith
+com.google.android.apps.tv.dreamx          # ambient-mode screensaver

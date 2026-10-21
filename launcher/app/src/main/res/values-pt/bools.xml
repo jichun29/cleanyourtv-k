@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Full Portuguese weekday names ("segunda-feira 28 de fevereiro") need two lines on Home, as in German. -->
+    <bool name="date_single_line">false</bool>
+</resources>

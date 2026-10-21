@@ -1,0 +1,107 @@
+# Philips 55OLED707/12 (55" 4K OLED with Ambilight), UK
+# Android TV 11, firmware RTT2.211108.001 build 21029, security patch 2025-10-01, board PH1M_EA_9970A
+# ro.product.model=2021/22 Philips UHD Android TV  ro.product.device=PH1M_EA_9970A
+# Fingerprint: Philips/PH1M_EA_9970A/PH1M_EA_9970A:11/RTT2.211108.001/21029:user/release-keys
+# MediaTek MT5895, 2.67 GB RAM. Connected over Ethernet.
+#
+# This is the same board AND the same firmware build as examples/philips-50pus8517, on an OLED
+# panel instead of an LED one. That file's quirks and its DO NOT DISABLE block apply here as
+# written; read them first. Nothing in its DO NOT DISABLE block is disabled below: eum, aurora,
+# xtv, playtv, contentexplorer, homeintentresolver and the browser engine all stay on.
+# This file lists what this unit disabled on top of, or instead of, that list.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/philips-55oled707/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/philips-55oled707/debloat.txt com.google.android.tvlauncher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.tvlauncher
+# Live TV app:    org.droidtv.playtv
+# App labels were read from each APK with `aapt dump badging`, not guessed from package names.
+#
+# What this unit adds to the 50PUS8517 notes:
+#
+# 1. org.droidtv.nettvbrowser is needed on a UK set. With it disabled, ITVX (a Freeview Play
+#    app) hung while BBC iPlayer still worked. It is re-enabled here, as the browser-engine
+#    entry in the 50PUS8517 DO NOT DISABLE block says it should be.
+# 2. com.phorus.playfi.tv (Play-Fi) could NOT be kept disabled and is commented out below, like
+#    mediashell in 50PUS8517 quirk 4. It came back after both full restarts, with enabled=1
+#    (ENABLED), not 0 (DEFAULT): something re-enables it on purpose, so this is not the ~10 s
+#    persistence delay (50PUS8517 quirk 1). Every other package stayed disabled. The likely
+#    source is org.droidtv.tv.tptvservice, which must stay and which posts a notification on a
+#    PlayFi_ChannelID channel at every boot. That link is not proven.
+# 3. org.droidtv.homeintentresolver ships with its HomeActivity component already disabled
+#    (`pm dump` lists it under disabledComponents), so it does not compete for Home. While
+#    com.google.android.tvlauncher is enabled it wins Home at priority 2 and
+#    `cmd package set-home-activity` does not stick; once it is disabled, the replacement
+#    launcher takes Home immediately (50PUS8517 quirk 6).
+# 4. uk.co.freeview.mdsclient (Freeview Play metadata) crash-loops in the background, several
+#    times in a few minutes. It did this before anything was disabled, so it is the firmware,
+#    not this list. Each crash logs DeadSystemException, which looks alarming and is not.
+# 5. Idle-loop check (50PUS8517 quirk 5 method, 30 s, TV in standby): 163 lines, no line
+#    repeating more than 15 times, and nothing tied to a disabled package. The top repeaters
+#    were cast_shell (a phone probing Chromecast) and the tuner's signal-level poll.
+#
+# Verified after a full restart (off at the wall): the replacement launcher stays Home, ITVX
+# plays, channel changes and the TV guide work with Alexa disabled, the SOURCES drawer stays
+# open and lists HDMI 1-4, and the red button opens HbbTV.
+#
+# Memory, read from `dumpsys meminfo` at idle on the home screen. The two readings straddle a
+# restart, so treat the difference as approximate:
+#   Stock:                     1,624 MB used PSS,   712 MB free, 326 MB in swap
+#   This list + a new launcher: 1,389 MB used PSS,  831 MB free,  80 MB in swap
+# In a 30-minute Netflix session afterwards, free memory stayed between 814 and 939 MB with no
+# low-memory kills.
+#
+# Kept on purpose: Chromecast (com.google.android.apps.mediashell), Ambilight and Hue, the
+# Philips browser, DLNA, IP control, firmware updates, and every streaming app this household
+# uses (Netflix, Prime Video, Disney+, YouTube, Apple TV, the Freeview Play apps).
+
+# TP Vision telemetry, as in 50PUS8517. Disable candeebug and gel together.
+org.droidtv.candeebug                     # "DAC" analytics uploader
+org.droidtv.gel                           # metrics collector that runs inside candeebug's process
+org.droidtv.usagelogger                   # usage and device logging feeding the above
+
+# Philips content promos and the app gallery
+org.droidtv.nettvrecommender              # "Top Picks" content row
+org.droidtv.recommendation                # its backend; disable the row above first
+org.droidtv.nettv.market                  # "Smart TV Collection" app storefront
+org.droidtv.nettvapps                     # "NetTvApps", headless; holds TV_INSTALL_PACKAGES_SILENT and handles START_NETTV_VIRGINAPPS, i.e. the gallery's preload installer (read from its manifest, behaviour not traced)
+org.droidtv.nettvapp1814                  # ARTE
+org.droidtv.nettvapp4546                  # MEGOGO
+org.droidtv.nettvapp4932                  # Free Games by PlayWorks
+org.droidtv.nettvapp5326                  # Toon Goggles
+org.droidtv.nettvapp5512                  # Fishing TV
+org.droidtv.nettvapp5527                  # Flix Premiere
+org.droidtv.nettvapp20004410              # Couchplay Games
+org.droidtv.android.fitness               # Fitness Buddy
+
+# Philips features this owner does not use. Check each against your own setup.
+org.droidtv.amazonalexa                   # Alexa bridge; 50PUS8517 warns that live TV binds into it. Channel changes and the TV guide still work with it disabled here
+org.droidtv.demome                        # "Demo me" retail demo mode
+# com.phorus.playfi.tv                    # Play-Fi multi-room audio; re-enables itself at every boot, see note 2
+com.phorus.playfi.softap                  # DTSPlayFiSoftAP, Play-Fi's soft access point helper; stayed disabled
+
+# Google telemetry and first-setup leftovers
+com.google.android.feedback               # Market Feedback Agent
+com.google.android.tungsten.setupwraith   # "Setup Wizard", 24 MB resident at idle. On Google TV sets in this repo it owned the Wi-Fi network saved at setup, and disabling it deleted that network. This TV is on Ethernet, so that was NOT checked here; keep it if your TV uses Wi-Fi
+
+# Google apps this owner does not use
+com.google.android.katniss                # Assistant and voice search; this remote has no mic button
+com.google.android.play.games
+com.google.android.videos                 # Google TV / Play Movies
+com.google.android.youtube.tvmusic        # YouTube Music
+
+# Preinstalled streaming apps, all in /data/app
+com.mgmedia.androidApp                    # CHILI
+com.singa.client                          # Singa (karaoke)
+com.ted.android.tv                        # TED
+com.zeasn.whalelive                       # WhaleLive, ad-supported FAST channels
+tv.pluto.android                          # Pluto TV
+tv.wuaki.apptv                            # Rakuten TV
+com.boosteroidtv.streaming                # Boosteroid TV cloud gaming
+
+# Stock launcher and its content engine. Disable the launcher FIRST; see 50PUS8517 for why.
+# Doing it the other way round on this unit force-restarted the launcher and removed the
+# notification panel, exactly as described there.
+# com.google.android.tvlauncher   # launcher/build-and-install.sh disables it after Home has moved; 182 MB resident at idle on this unit
+com.google.android.tvrecommendations      # recommendation rows, channels and the notification panel
