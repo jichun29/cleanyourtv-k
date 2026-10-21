@@ -2451,11 +2451,31 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         addSettingsMenuRow(rows, popup, R.string.tv_settings,
                 () -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        addSettingsMenuRow(rows, popup, R.string.menu_about, this::showAbout);
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar)
                 ? Gravity.START : Gravity.END);
         rows.getChildAt(0).requestFocus();
+    }
+
+    /** 关于桌面：项目名 + 版本号。 */
+    private void showAbout() {
+        String ver;
+        try {
+            ver = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+        } catch (Exception e) {
+            ver = "?";
+        }
+        String body = getString(R.string.about_project) + "\n"
+                + getString(R.string.about_version, ver) + "\n"
+                + getString(R.string.about_forked) + "\n"
+                + getString(R.string.about_repo);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.about_title)
+                .setMessage(body)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {

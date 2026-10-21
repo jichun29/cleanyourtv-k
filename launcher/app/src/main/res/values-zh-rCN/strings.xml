@@ -96,4 +96,10 @@
         <item quantity="other">%1$d 个应用</item>
     </plurals>
     <string name="greeting_with_name">%1$s，%2$s</string>
+    <string name="menu_about">关于桌面</string>
+    <string name="about_title">关于桌面</string>
+    <string name="about_project">CleanYourTV</string>
+    <string name="about_forked">K 定制维护</string>
+    <string name="about_repo">github.com/jichun29/cleanyourtv-k</string>
+    <string name="about_version">版本 %1$s</string>
 </resources>

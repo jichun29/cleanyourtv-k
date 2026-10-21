@@ -4,6 +4,13 @@
 >
 > 面向国内电视用户：小米国行电视实测可用（MiTV-ASTP0 / Android 9），理论上所有 Android TV 9+ 都能跑。
 
+## 截图
+
+| 桌面 | 时钟屏保 | 设置菜单 |
+|:---:|:---:|:---:|
+| ![桌面](docs/screenshots/home.png) | ![时钟屏保](docs/screenshots/clock-screensaver.png) | ![设置菜单](docs/screenshots/settings-menu.png) |
+| 简洁桌面 + Dock + 中文界面 | 闲置 5 分钟自动进入 / 按 Back 键立即进入 | 三选一：简洁桌面设置 / 电视系统设置 / 关于桌面 |
+
 ## 这个版本多了什么
 
 在上游 v2.5.0 基础上（Round K 大更新 + 电影感顶栏，含 Launcher 设置页、Dock 编辑、App 库、重排模式、减少过度绘制等），并整合了 quiet-tv（Big Sur 壁纸）、tvhome-zh（必应每日壁纸）、apple-tv-launcher（航拍视频壁纸）三个二开项目的功能，额外加入了这些定制：
