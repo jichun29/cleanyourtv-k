@@ -516,7 +516,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
-        btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        // 老大 2026-10-21 需求：单击设置按钮 → 弹「桌面设置 / 系统设置」二选一。
+        // 桌面设置 = LauncherSettingsActivity（壁纸/动画/列数/Dock 全在里面，解决「壁纸设过一次就再也找不到」）。
+        // 系统设置 = 原来的 Settings.ACTION_SETTINGS（国行走小米 fallback）。
+        // 长按仍弹上游完整菜单（launcher 设置/模块卡片/Dock 编辑/重排），给高级用户留着。
+        btnSettings.setOnClickListener(v -> showSettingsChooser());
         btnReorder = findViewById(R.id.btnReorder);
         btnReorder.setOnClickListener(v -> toggleReorder());
         btnReorder.setVisibility(cfg.reorderButton ? View.VISIBLE : View.GONE);
@@ -2362,6 +2366,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         // Hebrew puts Settings at the left of the header: grow the menu inward from it.
+        dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar)
+                ? Gravity.START : Gravity.END);
+        rows.getChildAt(0).requestFocus();
+    }
+
+    /**
+     * K 定制 2026-10-21：单击设置按钮弹的「桌面设置 / 系统设置」二选一玻璃弹窗。
+     * 复用 showSettingsMenu 的玻璃 popup + addSettingsMenuRow 按键处理。
+     *  wallpaper 等 launcher 设置全收进 LauncherSettingsActivity，单击不再直达系统设置。
+     */
+    private void showSettingsChooser() {
+        View anchor = findViewById(R.id.btnSettings);
+        View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
+        LinearLayout rows = panel.findViewById(R.id.rows);
+        PopupWindow popup = glassPopup(panel, (int) (200 * density));
+        addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
+                new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
+        addSettingsMenuRow(rows, popup, R.string.tv_settings,
+                () -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+        popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar)
                 ? Gravity.START : Gravity.END);
         rows.getChildAt(0).requestFocus();
