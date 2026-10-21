@@ -42,6 +42,8 @@
     <string name="race_next">%1$s 于 %2$s</string>
     <string name="vpn">VPN</string>
     <string name="vpn_off">VPN 已断开</string>
+    <string name="menu_sleep">休眠</string>
+    <string name="sleep_unavailable">休眠需要开启 CleanYourTV 休眠服务：设置 > 无障碍</string>
     <string name="launcher_settings">简洁桌面设置</string>
     <string name="columns_label">每行应用数量</string>
     <string name="animations_state">动态效果：%1$s</string>

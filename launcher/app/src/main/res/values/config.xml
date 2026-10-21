@@ -9,8 +9,13 @@
 
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
-        <!-- Dock: 通用影视/直播/工具应用（按使用频率排序） -->
+        <!-- Dock: 老大指定的 4 个 -->
+        <item>com.baipiaozhe.tv</item>          <!-- 白嫖者 TV -->
+        <item>com.foni.andrid.fan</item>        <!-- 饭太硬 -->
         <item>com.ktcp.csvideo</item>           <!-- 云视听极光(腾讯视频 TV) -->
+        <item>com.tv.qx</item>                  <!-- 千寻直播 -->
+
+        <!-- 影视类 -->
         <item>com.github.tvbox.osc.juo</item>   <!-- TVBox -->
         <item>com.tastysoup.tv</item>           <!-- 茶杯狐 -->
         <item>com.xx.blbl</item>                <!-- BBLL(B站) -->
@@ -29,6 +34,7 @@
         <item>org.xbmc.kodi</item>              <!-- Kodi -->
         <item>com.quark.yun.tv</item>           <!-- 夸克网盘 TV -->
         <item>com.xiaobaifile.tv</item>         <!-- 小白文件 -->
+        <item>net.xmhx3.helper</item>           <!-- XMind Helper -->
 
         <!-- 音乐类 -->
         <item>com.tencent.qqmusictv</item>      <!-- QQ 音乐 TV -->
@@ -116,14 +122,8 @@
          YouTube button sends 190 (KEYCODE_BUTTON_3) to the stock launcher, so it does nothing once launcherx
          is disabled (Chromecast with Google TV, Xiaomi MiTV-AXFR2): 190:com.google.android.youtube.tv brings
          it back. The KTC LUMIO VISION remote (Realtek Google TV) sends Netflix 191, YouTube 190, Prime Video 195
-         and TL;DR 200. Some remotes send several app buttons as one keycode and tell them apart only by scancode
-         (Sony BRAVIA: YouTube, Prime Video and Disney+ are all keycode 196, scancodes 485, 490 and 491); list those
-         as "scan:scancode:package", e.g. scan:490:com.wbd.hbomax, found with `tools/tv.py 'getevent -lt'` (the
-         EV_KEY code, in hex). A scancode entry wins over a keycode. A listed app that is not installed leaves the
-         button doing nothing. Leave empty to omit. -->
+         and TL;DR 200. A listed app that is not installed leaves the button doing nothing. Leave empty to omit. -->
     <string-array name="app_keys" translatable="false">
-        <!-- K 定制: 小米遥控器应用键(KEYCODE_BUTTON_3=190)一键打开一起看TV -->
-        <item>190:cn.fuwentuteng.androidtv</item>
     </string-array>
 
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
@@ -143,24 +143,6 @@
     <!-- A reorder button (two arrows) in the top bar. Off by default: reordering is also in the Settings
          button's long-press menu, so it needs no extra button on screen. -->
     <bool name="reorder_button">false</bool>
-    <!-- Wi-Fi and Settings as round icon-only buttons (the network name moves to the talkback description);
-         Inputs keeps its label. -->
-    <bool name="icon_only_buttons">false</bool>
-    <!-- The app library as a round button in the top bar, beside Settings (app_library must be on too). -->
-    <bool name="library_button">false</bool>
-    <!-- With icon_only_buttons: keep the network name on the Wi-Fi pill up to this width in dp, cut with an ellipsis.
-         0 leaves the Wi-Fi pill as an icon. -->
-    <integer name="wifi_label_width">0</integer>
-
-    <!-- The Wi-Fi/Ethernet pill in the top bar. false hides it (on Android 14 with Location off it can
-         only say "Wi-Fi", not the network name). Can also be set with "show_network_pill" in a theme. -->
-    <bool name="show_network_pill">true</bool>
-    <!-- Names under every tile, not only the focused one: unfocused names stay dimmed, the focused one is full white.
-         With dock_row the band grows down to hold the dock's names too. -->
-    <bool name="always_show_names">false</bool>
-    <!-- Wallpapers decode as RGB_565 (2 bytes a pixel, 4 MB at 1080p), which bands dark gradients such as a night
-         sky, most of all under wallpaper_dim. true decodes them in 32-bit colour: 8 MB, for TVs with 2 GB or more. -->
-    <bool name="wallpaper_true_color">false</bool>
 
     <!-- Grid rows left visible under the dock on the home screen. 0 = dock sits at the very bottom. Tiles shrink if
          the dock, its title and this many rows would not otherwise fit the screen height. -->
@@ -209,16 +191,20 @@
          colour; the shelf gets a larger name, a "Last opened" line (from the apps Home opened) and dock position
          dots, the focus glow takes the app's colour and the dock band turns translucent. false keeps the plain
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
-    <!-- K 定制: 电影感顶栏(焦点移到 Dock App 时顶部显示官方艺术图虚化背景+上次打开时间+位置圆点) -->
-    <bool name="cinematic_home">true</bool>
+    <bool name="cinematic_home">false</bool>
 
-    <!-- The glow behind the dock in the focused app's colour (red for YouTube, blue for Prime Video). false keeps
-         only background_color or the wallpaper behind everything. Can also be set with "ambient_glow": false in a
-         theme's config.json. -->
+    <!-- Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植）。默认空 = 不启用；
+         在壁纸设置面板里下载一个后，可在这里填文件名（如 north_america_aurora.mov）设为开机默认。 -->
+
+    <!-- 上游新增（2026-10-21 合并）：紧凑顶栏 / 磁贴常显名称 / 32位真彩壁纸 -->
+    <bool name="show_network_pill">true</bool>
+    <bool name="icon_only_buttons">false</bool>
+    <bool name="library_button">false</bool>
+    <integer name="wifi_label_width">0</integer>
+    <bool name="always_show_names">false</bool>
+    <bool name="wallpaper_true_color">false</bool>
+
+    <!-- 上游新增：应用彩色光晕 / Home 闲置时钟 -->
     <bool name="ambient_glow">true</bool>
-    <!-- Minutes Home may sit untouched before it shows the clock screensaver (ClockActivity); 0 turns it off.
-         Unlike the system screensaver this never starts over live TV or an app, which matters on TVs whose
-         Live TV window does not keep the screen on (CVTE): there the system screensaver would start in the
-         middle of a programme. Can also be set with "home_idle_clock_minutes": 10 in a theme's config.json. -->
     <integer name="home_idle_clock_minutes">0</integer>
 </resources>

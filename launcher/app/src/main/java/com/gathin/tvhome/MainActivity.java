@@ -2458,6 +2458,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         addSettingsMenuRow(rows, popup, R.string.tv_settings,
                 () -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        // 老大 2026-10-21 需求：Sleep 加到单击菜单（三选一），长按 OK 会被小米语音助手拦截
+        addSettingsMenuRow(rows, popup, R.string.menu_sleep, () -> {
+            if (!SleepService.sleep()) Toast.makeText(this, R.string.sleep_unavailable, Toast.LENGTH_LONG).show();
+        });
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar)
