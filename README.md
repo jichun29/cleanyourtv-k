@@ -6,7 +6,7 @@
 
 ## 这个版本多了什么
 
-在上游 v2.5.0 基础上（Round K 大更新 + 电影感顶栏，含 Launcher 设置页、Dock 编辑、App 库、重排模式、减少过度绘制等），额外加入了这些定制：
+在上游 v2.5.0 基础上（Round K 大更新 + 电影感顶栏，含 Launcher 设置页、Dock 编辑、App 库、重排模式、减少过度绘制等），并整合了 quiet-tv（Big Sur 壁纸）、tvhome-zh（必应每日壁纸）、apple-tv-launcher（航拍视频壁纸）三个二开项目的功能，额外加入了这些定制：
 
 ### 🖼️ 内置壁纸模块（移植自 quiet-tv）
 
