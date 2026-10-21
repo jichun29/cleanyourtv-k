@@ -124,6 +124,8 @@
          it back. The KTC LUMIO VISION remote (Realtek Google TV) sends Netflix 191, YouTube 190, Prime Video 195
          and TL;DR 200. A listed app that is not installed leaves the button doing nothing. Leave empty to omit. -->
     <string-array name="app_keys" translatable="false">
+        <!-- K 定制: 小米遥控器应用键(KEYCODE_BUTTON_3=190)一键打开一起看TV -->
+        <item>190:cn.fuwentuteng.androidtv</item>
     </string-array>
 
     <!-- Show the Solar Hijri (Shamsi) date used in Iran and Afghanistan, e.g. "27 Mehr 1405", above the
@@ -191,5 +193,6 @@
          colour; the shelf gets a larger name, a "Last opened" line (from the apps Home opened) and dock position
          dots, the focus glow takes the app's colour and the dock band turns translucent. false keeps the plain
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
-    <bool name="cinematic_home">false</bool>
+    <!-- K 定制: 电影感顶栏(焦点移到 Dock App 时顶部显示官方艺术图虚化背景+上次打开时间+位置圆点) -->
+    <bool name="cinematic_home">true</bool>
 </resources>

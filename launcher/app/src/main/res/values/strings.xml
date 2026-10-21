@@ -114,5 +114,5 @@
     <string name="race_finished">Chequered flag</string>
     <!-- Cinematic top shelf (cinematic_home): the line under the focused dock app's name; %1$s is when it was
          last opened, e.g. "5 minutes ago" or "yesterday, 9:40 pm". -->
-    <string name="last_opened">Last opened %1$s</string>
+    <string name="last_opened">上次打开 %1$s</string>
 </resources>
