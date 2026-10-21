@@ -206,5 +206,5 @@
 
     <!-- 上游新增：应用彩色光晕 / Home 闲置时钟 -->
     <bool name="ambient_glow">true</bool>
-    <integer name="home_idle_clock_minutes">0</integer>
+    <integer name="home_idle_clock_minutes">5</integer> <!-- 5 分钟无操作自动进时钟屏保；0 关闭 -->
 </resources>

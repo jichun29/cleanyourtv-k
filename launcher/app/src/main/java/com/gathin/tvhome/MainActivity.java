@@ -1129,14 +1129,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back starts the screensaver. Apps can't ask the dream manager themselves (WRITE_DREAM_STATE
-        // is a system permission); SystemUI's Somnambulator can, and does so when started.
-        try {
-            startActivity(new Intent(Intent.ACTION_MAIN)
-                    .setClassName("com.android.systemui", "com.android.systemui.Somnambulator"));
-        } catch (ActivityNotFoundException | SecurityException e) {
-            android.util.Log.w("TvHome", "no screensaver starter on this TV", e);
-        }
+        // Home 按 Back：直接启动自家时钟屏保 ClockActivity。
+        // 不走 Somnambulator（系统屏保启动器）——小米电视的 Somnambulator 依赖 screensaver_components 设置，
+        // 未设置时会启动后立即退出（logcat: Sandman Activating dream → Waking up from dream），等于没反应。
+        startActivity(new Intent(this, ClockActivity.class));
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -2431,9 +2427,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         if (moduleCards) addSettingsMenuRow(rows, popup, R.string.module_cards, this::showModuleCards);
-        addSettingsMenuRow(rows, popup, R.string.menu_sleep, () -> {
-            if (!SleepService.sleep()) Toast.makeText(this, R.string.sleep_unavailable, Toast.LENGTH_LONG).show();
-        });
         if (dockRow) addSettingsMenuRow(rows, popup, R.string.dock_edit, this::startDockEdit);
         addSettingsMenuRow(rows, popup, R.string.reorder, this::toggleReorder);
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
@@ -2458,10 +2451,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         addSettingsMenuRow(rows, popup, R.string.tv_settings,
                 () -> open(systemIntent(Settings.ACTION_SETTINGS)));
-        // 老大 2026-10-21 需求：Sleep 加到单击菜单（三选一），长按 OK 会被小米语音助手拦截
-        addSettingsMenuRow(rows, popup, R.string.menu_sleep, () -> {
-            if (!SleepService.sleep()) Toast.makeText(this, R.string.sleep_unavailable, Toast.LENGTH_LONG).show();
-        });
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         popup.setWidth(Math.max((int) (200 * density), panel.getMeasuredWidth()));
         dropIn(popup, panel, anchor, getResources().getBoolean(R.bool.rtl_menu_bar)
