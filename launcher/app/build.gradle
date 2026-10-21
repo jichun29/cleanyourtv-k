@@ -15,14 +15,23 @@ android {
         versionName '3.5'
     }
 
+    signingConfigs {
+        release {
+            storeFile file('../keystore/cleanyourtv.keystore')
+            storePassword 'cleanyourtv123'
+            keyAlias 'cleanyourtv'
+            keyPassword 'cleanyourtv123'
+        }
+    }
+
     buildTypes {
         release {
             // R8 strips and optimises the code (AndroidX included): smaller APK, faster start on a slow TV CPU.
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Sideloaded over ADB, never published: sign with the debug key so it installs over a debug build.
-            signingConfig signingConfigs.debug
+            // K 定制: 用自有签名, 覆盖安装不丢数据
+            signingConfig signingConfigs.release
         }
     }
 
