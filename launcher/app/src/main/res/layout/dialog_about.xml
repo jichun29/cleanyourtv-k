@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- About dialog: glass panel style matching the launcher (tvOS-like frosted). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/glass_panel"
+    android:paddingStart="32dp"
+    android:paddingEnd="32dp"
+    android:paddingTop="28dp"
+    android:paddingBottom="24dp"
+    android:elevation="12dp"
+    android:gravity="center_horizontal">
+
+    <!-- App icon -->
+    <ImageView
+        android:id="@+id/aboutIcon"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="16dp"
+        android:scaleType="fitCenter" />
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/aboutTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_title"
+        android:textColor="#FFFFFFFF"
+        android:textSize="24sp"
+        android:fontFamily="@font/outfit"
+        android:fontVariationSettings="'wght' 500"
+        android:letterSpacing="-0.01"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Version -->
+    <TextView
+        android:id="@+id/aboutVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#99FFFFFF"
+        android:textSize="16sp"
+        android:fontFamily="@font/outfit"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Project -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_project"
+        android:textColor="#FFFFFFFF"
+        android:textSize="17sp"
+        android:fontFamily="@font/outfit"
+        android:fontVariationSettings="'wght' 500"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Forked -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_forked"
+        android:textColor="#80FFFFFF"
+        android:textSize="14sp"
+        android:fontFamily="@font/outfit"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Repo -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_repo"
+        android:textColor="#66FFFFFF"
+        android:textSize="13sp"
+        android:fontFamily="@font/outfit"
+        android:letterSpacing="0.02"
+        android:layout_marginBottom="20dp" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#33FFFFFF"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Close hint -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="返回键关闭"
+        android:textColor="#66FFFFFF"
+        android:textSize="12sp"
+        android:fontFamily="@font/outfit" />
+</LinearLayout>

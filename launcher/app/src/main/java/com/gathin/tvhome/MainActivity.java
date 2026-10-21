@@ -2459,7 +2459,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         rows.getChildAt(0).requestFocus();
     }
 
-    /** 关于桌面：项目名 + 版本号。 */
+    /** 关于桌面：玻璃拟态弹窗，展示项目名、版本、维护信息。 */
     private void showAbout() {
         String ver;
         try {
@@ -2467,15 +2467,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         } catch (Exception e) {
             ver = "?";
         }
-        String body = getString(R.string.about_project) + "\n"
-                + getString(R.string.about_version, ver) + "\n"
-                + getString(R.string.about_forked) + "\n"
-                + getString(R.string.about_repo);
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(R.string.about_title)
-                .setMessage(body)
-                .setPositiveButton(android.R.string.ok, null)
-                .show();
+        android.app.Dialog dlg = new android.app.Dialog(this, android.R.style.Theme_Translucent_NoTitleBar);
+        dlg.setContentView(R.layout.dialog_about);
+        android.view.Window w = dlg.getWindow();
+        if (w != null) {
+            w.setLayout(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setGravity(android.view.Gravity.CENTER);
+            w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+        android.widget.ImageView icon = dlg.findViewById(R.id.aboutIcon);
+        android.widget.TextView version = dlg.findViewById(R.id.aboutVersion);
+        if (icon != null) icon.setImageDrawable(getApplicationInfo().loadIcon(getPackageManager()));
+        if (version != null) version.setText(getString(R.string.about_version, ver));
+        dlg.show();
     }
 
     private void addSettingsMenuRow(LinearLayout rows, PopupWindow popup, int title, Runnable action) {

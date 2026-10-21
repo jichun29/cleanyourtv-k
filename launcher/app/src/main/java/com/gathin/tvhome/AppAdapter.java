@@ -456,8 +456,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         btnOpen.setOnClickListener(v -> { dlg.dismiss(); launch(e); } );
         btnTop.setOnClickListener(v -> { dlg.dismiss(); moveToFront(e); });
         btnMove.setOnClickListener(v -> { dlg.dismiss(); startMoveMode(e); });
-        btnDetails.setOnClickListener(v -> { dlg.dismiss(); openAppDetails(e.pkg); });
-        btnInfo.setOnClickListener(v -> { dlg.dismiss(); openAppInfo(e.pkg); });
+        btnDetails.setOnClickListener(v -> { dlg.dismiss(); uninstallApp(e.pkg); });
+        btnInfo.setOnClickListener(v -> { dlg.dismiss(); showAppInfoDialog(e); });
         btnOpen.requestFocus();
         dlg.show();
     }
@@ -488,7 +488,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         } catch (ActivityNotFoundException ignored) {
         }
-        openAppDetails(pkg);
+        // 标准详情页不可用时不跳小米页面, 直接提示
+        Toast.makeText(ctx, "无法打开应用信息", Toast.LENGTH_SHORT).show();
     }
 
     /** 把当前 tile 顺序写回 Order 文件(置顶/移动后调用),与 MainActivity.endReorder 的保存逻辑一致。 */
@@ -511,14 +512,59 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             return;
         } catch (ActivityNotFoundException ignored) {
         }
-        // 小米国行 fallback: 电视管家的应用管理页(在这里能卸载/清数据/查权限)
+        // 标准详情页不可用时不跳小米页面, 直接提示
+        Toast.makeText(ctx, "无法打开应用管理", Toast.LENGTH_SHORT).show();
+    }
+
+    /** 直接卸载: 弹出系统卸载确认框, 用户确认后直接卸载, 不跳第三方管理页。 */
+    private void uninstallApp(String pkg) {
         try {
-            Intent mitv = new Intent();
-            mitv.setClassName("com.xiaomi.mitv.tvmanager", "com.xiaomi.mitv.tvmanager.junk.appuninstall.DelManagerActivity");
-            mitv.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            ctx.startActivity(mitv);
-        } catch (ActivityNotFoundException ignored) {
+            Intent uninstall = new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + pkg));
+            uninstall.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            ctx.startActivity(uninstall);
+        } catch (ActivityNotFoundException e) {
+            // 系统不支持直接卸载, 回退到应用详情页
+            openAppDetails(pkg);
         }
+    }
+
+    /** 显示应用信息弹窗: 玻璃拟态风格, 展示包名/版本/安装时间/更新时间/数据目录。 */
+    private void showAppInfoDialog(Entry e) {
+        PackageManager pm = ctx.getPackageManager();
+        android.app.Dialog dlg = new android.app.Dialog(ctx, android.R.style.Theme_Translucent_NoTitleBar);
+        dlg.setContentView(R.layout.dialog_app_info);
+        android.view.Window w = dlg.getWindow();
+        if (w != null) {
+            w.setLayout(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setGravity(android.view.Gravity.CENTER);
+            w.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        android.widget.ImageView icon = dlg.findViewById(R.id.appIcon);
+        android.widget.TextView name = dlg.findViewById(R.id.appName);
+        android.widget.TextView pkg = dlg.findViewById(R.id.appPkg);
+        android.widget.TextView version = dlg.findViewById(R.id.infoVersion);
+        android.widget.TextView installTime = dlg.findViewById(R.id.infoInstallTime);
+        android.widget.TextView updateTime = dlg.findViewById(R.id.infoUpdateTime);
+        android.widget.TextView targetSdk = dlg.findViewById(R.id.infoTargetSdk);
+        android.widget.TextView dataDir = dlg.findViewById(R.id.infoDataDir);
+
+        try {
+            android.content.pm.PackageInfo pi = pm.getPackageInfo(e.pkg, 0);
+            android.content.pm.ApplicationInfo ai = pi.applicationInfo;
+            if (icon != null) icon.setImageDrawable(e.icon);
+            if (name != null) name.setText(e.label);
+            if (pkg != null) pkg.setText(e.pkg);
+            if (version != null) version.setText(pi.versionName + " (" + pi.versionCode + ")");
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            if (installTime != null) installTime.setText(sdf.format(new java.util.Date(pi.firstInstallTime)));
+            if (updateTime != null) updateTime.setText(sdf.format(new java.util.Date(pi.lastUpdateTime)));
+            if (targetSdk != null) targetSdk.setText(String.valueOf(ai != null ? ai.targetSdkVersion : "-"));
+            if (dataDir != null) dataDir.setText(ai != null ? ai.dataDir : "-");
+        } catch (PackageManager.NameNotFoundException ex) {
+            if (name != null) name.setText("无法获取应用信息");
+        }
+        dlg.show();
     }
 
     /** Entry at a position, or null. Used by MainActivity to resolve the focused tile for MENU. */

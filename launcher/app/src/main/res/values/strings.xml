@@ -96,10 +96,10 @@
     <string name="card_state_new_key">New key</string>
     <string name="card_state_new_label">New name</string>
     <!-- K 定制:菜单键玻璃弹窗 -->
-    <string name="action_open">打开</string>
-    <string name="action_top">置顶到最前</string>
+    <string name="action_open">打开应用</string>
+    <string name="action_top">置顶应用</string>
     <string name="action_move">移动位置</string>
-    <string name="action_details">管理 / 卸载</string>
+    <string name="action_details">卸载应用</string>
     <string name="action_info">应用信息</string>
     <string name="action_hint">返回键关闭 · 上下选择 · 确定执行</string>
     <string name="action_moved_top">已置顶：%1$s</string>
