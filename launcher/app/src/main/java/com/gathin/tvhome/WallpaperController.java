@@ -69,6 +69,9 @@ final class WallpaperController {
     private volatile int request;
     private int index, preview, shown = -2;
     private boolean rotating, active, useDefault;
+    /** 必应每日壁纸模式（tvhome-zh 移植）：开启后图片层显示电视本地 bing-wallpaper.jpg。 */
+    private boolean bingMode;
+    private BingWallpaper bing;
     private Dialog picker;
     private ValueAnimator transition;
 
@@ -88,6 +91,8 @@ final class WallpaperController {
         rotating = preferences.getBoolean("rotating", true);
         useDefault = preferences.getBoolean("default", !preferences.contains("index"));
         if (useDefault) rotating = false;
+        bing = new BingWallpaper(activity);
+        bingMode = preferences.getBoolean("bing", false) && bing.enabled() && bing.file() != null;
 
         background = new FrameLayout(activity);
         root.addView(background, layerIndex,
@@ -101,7 +106,25 @@ final class WallpaperController {
                 new int[]{0x70000000, 0x30000000, 0x99000000}));
         shade.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         background.addView(shade, new FrameLayout.LayoutParams(-1, -1));
-        display(useDefault ? -1 : index, false);
+        display(useDefault ? -1 : (bingMode ? -2 : index), false);
+        refreshBing();
+    }
+
+    /** 启动时后台拉一次必应今日图（开了开关且今天没拉过才真的下载），拉到就切换显示。 */
+    private void refreshBing() {
+        if (!bing.enabled()) return;
+        decoder.execute(() -> {
+            boolean changed = bing.refreshIfDue();
+            if (changed) main.post(() -> {
+                if (activity.isDestroyed()) return;
+                if (preferences.getBoolean("bing", false)) {
+                    bingMode = true;
+                    useDefault = false;
+                    rotating = false;
+                    display(-2, true);
+                }
+            });
+        });
     }
 
     private ImageView image() {
@@ -141,11 +164,11 @@ final class WallpaperController {
         return decode(n, sample);
     }
 
-    /** n &lt; 0 shows the default backdrop (no picture layer visible). */
+    /** n &lt; 0 shows the default backdrop (no picture layer visible); n == -2 shows the Bing daily picture. */
     private void display(int n, boolean animate) {
         final int version = ++request;
         if (transition != null) { transition.end(); transition = null; }
-        if (n < 0) {
+        if (n < 0 && n != -2) {
             current.setImageDrawable(null);
             incoming.setImageDrawable(null);
             background.setVisibility(View.INVISIBLE);
@@ -157,7 +180,8 @@ final class WallpaperController {
         if (shown == n && background.getVisibility() == View.VISIBLE) return;
         decoder.execute(() -> {
             if (version != request) return;
-            Bitmap bitmap = fullImage(n);
+            Bitmap bitmap = n == -2 ? bingImage() : fullImage(n);
+            if (bitmap == null) return;   // 必应图解码失败保持现状
             main.post(() -> {
                 if (version != request || activity.isDestroyed()) return;
                 background.setVisibility(View.VISIBLE);
@@ -182,14 +206,31 @@ final class WallpaperController {
                     });
                     transition.start();
                 }
-                Log.i("CleanYourTV", "Wallpaper display=" + FILES[n] + " rotating=" + rotating);
+                Log.i("CleanYourTV", "Wallpaper display=" + (n == -2 ? "bing" : FILES[n]) + " rotating=" + rotating);
             });
         });
     }
 
+    /** 解码本地必应图，按屏幕尺寸降采样。 */
+    private Bitmap bingImage() {
+        java.io.File f = bing.file();
+        if (f == null) return null;
+        android.util.DisplayMetrics screen = activity.getResources().getDisplayMetrics();
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(f.getPath(), bounds);
+        if (bounds.outWidth <= 0) return null;
+        int sample = 1;
+        while (bounds.outWidth / (sample * 2) >= screen.widthPixels
+                && bounds.outHeight / (sample * 2) >= screen.heightPixels) sample *= 2;
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inSampleSize = sample;
+        return BitmapFactory.decodeFile(f.getPath(), o);
+    }
+
     private void save() {
         preferences.edit().putInt("index", index).putBoolean("rotating", rotating)
-                .putBoolean("default", useDefault).apply();
+                .putBoolean("default", useDefault).putBoolean("bing", bingMode).apply();
     }
 
     private void schedule() {
@@ -253,7 +294,7 @@ final class WallpaperController {
     void showPicker() {
         if (picker != null) return;
         main.removeCallbacks(rotate);
-        preview = useDefault ? -1 : index;
+        preview = useDefault ? -1 : (bingMode ? -2 : index);
         picker = new Dialog(activity);
         FrameLayout content = new FrameLayout(activity);
         // Only the content layers above the wallpaper are hidden during preview; the
@@ -274,6 +315,7 @@ final class WallpaperController {
 
         TextView mode = label(
                 useDefault ? "当前：默认壁纸 · 纯黑背景＋应用主题色光晕"
+                        : bingMode ? "当前：必应每日壁纸 · 每天自动换一张"
                         : rotating ? "当前：自动轮播【每 5 分钟】" : "当前：固定壁纸", 13);
         place(content, mode, 600, 25, 48, 73);
 
@@ -281,7 +323,14 @@ final class WallpaperController {
         auto.setGravity(Gravity.CENTER);
         auto.setFocusable(true);
         auto.setBackground(border(false));
-        place(content, auto, 144, 40, 768, 42);
+        place(content, auto, 144, 40, 620, 42);
+
+        // 必应每日壁纸开关（tvhome-zh 移植）：打开后每天自动换必应今日图
+        TextView bingBtn = label(bingMode || bing.enabled() ? "必应每日壁纸：开" : "必应每日壁纸：关", 14);
+        bingBtn.setGravity(Gravity.CENTER);
+        bingBtn.setFocusable(true);
+        bingBtn.setBackground(border(false));
+        place(content, bingBtn, 190, 40, 780, 42);
 
         TextView status = label("", 14);
         status.setGravity(Gravity.CENTER);
@@ -316,7 +365,7 @@ final class WallpaperController {
                 card.setBackground(border(focus));
                 if (focus) { preview = choice; display(choice, true); status.setText(name(choice)); }
             });
-            card.setOnClickListener(v -> commit(choice < 0 ? index : choice, false, choice < 0));
+            card.setOnClickListener(v -> commit(choice < 0 ? index : choice, false, choice < 0, false));
             card.setOnKeyListener((v, key, event) -> {
                 if (key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT) {
                     if (event.getAction() == KeyEvent.ACTION_DOWN)
@@ -338,13 +387,50 @@ final class WallpaperController {
             if (focus) status.setText(rotating
                     ? "按确定关闭轮播，固定当前风景壁纸" : "按确定开启三张风景壁纸轮播");
         });
-        auto.setOnClickListener(v -> commit(preview < 0 ? index : preview, !rotating, false));
+        auto.setOnClickListener(v -> commit(preview < 0 ? index : preview, !rotating, false, false));
         auto.setOnKeyListener((v, key, event) -> {
             if (key == KeyEvent.KEYCODE_DPAD_DOWN) {
                 if (event.getAction() == KeyEvent.ACTION_DOWN) cards[preview + 1].requestFocus();
                 return true;
             }
-            return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_LEFT
+            if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) bingBtn.requestFocus();
+                return true;
+            }
+            return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_LEFT;
+        });
+
+        bingBtn.setOnFocusChangeListener((v, focus) -> {
+            bingBtn.setBackground(border(focus));
+            if (focus) status.setText(bingMode || bing.enabled()
+                    ? "按确定关闭必应每日壁纸（当前壁纸保留）" : "按确定开启：每天自动换一张必应今日图");
+        });
+        bingBtn.setOnClickListener(v -> {
+            boolean on = !(bingMode || bing.enabled());
+            bing.setEnabled(on);
+            if (on) {
+                // 开启：立即后台拉一张，拉到就切到必应模式
+                status.setText("正在下载今日必应壁纸…");
+                decoder.execute(() -> {
+                    bing.refreshIfDue();
+                    main.post(() -> {
+                        if (picker == null || activity.isDestroyed()) return;
+                        if (bing.file() != null) commit(0, false, false, true);
+                        else status.setText("下载失败（电视可能没联网），明天开机自动重试");
+                    });
+                });
+            } else {
+                // 关闭：保留当前图当固定壁纸（不删文件，明天不再换）
+                commit(index, false, false, false);
+                Toast.makeText(activity, "已关闭必应每日壁纸", Toast.LENGTH_SHORT).show();
+            }
+        });
+        bingBtn.setOnKeyListener((v, key, event) -> {
+            if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
+                if (event.getAction() == KeyEvent.ACTION_DOWN) auto.requestFocus();
+                return true;
+            }
+            return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
                     || key == KeyEvent.KEYCODE_DPAD_RIGHT;
         });
 
@@ -352,7 +438,7 @@ final class WallpaperController {
         picker.setOnDismissListener(dialog -> {
             picker = null;
             for (View v : hidden) v.setVisibility(View.VISIBLE);
-            display(useDefault ? -1 : index, true);
+            display(useDefault ? -1 : (bingMode ? -2 : index), true);
             schedule();
         });
         Window window = picker.getWindow();
@@ -366,14 +452,17 @@ final class WallpaperController {
         cards[useDefault ? 0 : index + 1].requestFocus();
     }
 
-    private void commit(int choice, boolean slideshow, boolean defaultWallpaper) {
+    private void commit(int choice, boolean slideshow, boolean defaultWallpaper, boolean bingOn) {
         index = choice;
         rotating = slideshow;
         useDefault = defaultWallpaper;
+        bingMode = bingOn;
+        if (bingOn) { useDefault = false; rotating = false; }
         save();
         picker.dismiss();
         Toast.makeText(activity,
-                defaultWallpaper ? "已恢复默认壁纸"
+                bingOn ? "已开启必应每日壁纸"
+                        : defaultWallpaper ? "已恢复默认壁纸"
                         : slideshow ? "已开启壁纸轮播" : "已关闭轮播，使用固定壁纸",
                 Toast.LENGTH_SHORT).show();
     }

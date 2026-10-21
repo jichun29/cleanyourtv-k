@@ -195,4 +195,7 @@
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
     <!-- K 定制: 电影感顶栏(焦点移到 Dock App 时顶部显示官方艺术图虚化背景+上次打开时间+位置圆点) -->
     <bool name="cinematic_home">true</bool>
+
+    <!-- K 定制 v3.3: 减弱动画（低配电视/盒子卡顿就开，来自 tvhome-zh 的同款开关） -->
+    <!-- <bool name="reduced_motion">true</bool> 取消注释即开启 -->
 </resources>
