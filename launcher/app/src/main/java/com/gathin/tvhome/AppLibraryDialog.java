@@ -360,7 +360,7 @@ final class AppLibraryDialog {
         menu.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         menu.setOutsideTouchable(true);
         menu.setAnimationStyle(0);
-        menu.setElevation(0f);
+        if (android.os.Build.VERSION.SDK_INT >= 21) menu.setElevation(0f);
         menu.setOnDismissListener(() -> {
             if (actionPopup == menu) actionPopup = null;
             restoreCardFocus();
@@ -426,8 +426,8 @@ final class AppLibraryDialog {
         view.setText(value);
         view.setTextSize(size);
         view.setTextColor(color);
-        view.setTypeface(activity.getResources().getFont(R.font.outfit_medium));
-        view.setLetterSpacing(0.01f);
+        view.setTypeface(Fonts.medium(activity));
+        if (android.os.Build.VERSION.SDK_INT >= 21) view.setLetterSpacing(0.01f);
         view.setIncludeFontPadding(false);
         return view;
     }

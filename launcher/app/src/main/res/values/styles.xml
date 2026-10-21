@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.TvHome" parent="android:Theme.Material.NoActionBar.Fullscreen">
+    <style name="Theme.TvHome" parent="android:Theme.Holo.NoActionBar.Fullscreen">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:windowAnimationStyle">@null</item>
@@ -18,12 +18,12 @@
         <item name="android:textColor">@drawable/pill_text</item>
         <item name="android:textSize">15sp</item>
         <item name="android:fontFamily">@font/outfit_medium</item>
-        <item name="android:letterSpacing">0.01</item>
         <item name="android:drawablePadding">9dp</item>
-        <item name="android:drawableTint">@drawable/pill_text</item>
         <item name="android:focusable">true</item>
         <item name="android:clickable">true</item>
     </style>
+    <!-- android:drawableTint 要 API 23，所以它只写在 values-v23/styles.xml 里；
+         Android 5.0/5.1 上图标保持原色（白），聚焦反色由文字承担。 -->
     <style name="TopButton" parent="TopButtonBase" />
 
     <!-- Icon-only pill: a 42dp circle (pill_bg's 21dp corners) with the 22dp icon centred by even padding. Give it a

@@ -138,6 +138,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private boolean heroShown;
     private boolean animations;
     private boolean advancedEffects;
+    /** onStart~onStop 之间为 true：桌面正显示在屏幕上（onTrimMemory 靠它判断能不能放手）。 */
+    private boolean started;
+    /** 内存紧张时磁贴与壁纸位图已放开，回桌面要重建。 */
+    private boolean memoryReleased;
     private TextView greeting;
     private View clockBlock;
     private View btnInputs;
@@ -222,42 +226,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private RecyclerView.OnScrollListener pendingFocusScroll;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    /** Refreshes the network pill when the connection changes: at boot Wi-Fi often connects after Home is shown. */
-    private final ConnectivityManager.NetworkCallback networkCallback = new ConnectivityManager.NetworkCallback() {
-        @Override
-        public void onAvailable(@NonNull Network network) {
-            handler.post(MainActivity.this::updateWifiLabel);
-        }
-
-        @Override
-        public void onLost(@NonNull Network network) {
-            handler.post(MainActivity.this::updateWifiLabel);
-        }
-    };
-    /** Shows the Inputs pill once the TV registers an input: at boot HDMI inputs can appear after Home is shown. */
-    private final TvInputManager.TvInputCallback inputCallback = new TvInputManager.TvInputCallback() {
-        @Override
-        public void onInputAdded(String inputId) {
-            updateInputsButton();
-        }
-
-        @Override
-        public void onInputRemoved(String inputId) {
-            updateInputsButton();
-        }
-    };
-    /** Listens for any VPN coming up or going down, even one this app's traffic is excluded from. */
-    private final ConnectivityManager.NetworkCallback vpnCallback = new ConnectivityManager.NetworkCallback() {
-        @Override
-        public void onAvailable(@NonNull Network network) {
-            handler.post(MainActivity.this::updateWifiLabel);
-        }
-
-        @Override
-        public void onLost(@NonNull Network network) {
-            handler.post(MainActivity.this::updateWifiLabel);
-        }
-    };
+    /** API 21+ 的网络/输入源回调（懒加载，4.4 上为 null，见 HomeApi21）。 */
+    private HomeApi21 api21;
     private final IntentFilter packageFilter = new IntentFilter();
     private final BroadcastReceiver packageReceiver = new BroadcastReceiver() {
         @Override
@@ -326,7 +296,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         ambient = findViewById(R.id.ambient);
         // The glow is one bitmap, so its alpha can be applied while drawing it. Otherwise every frame of
         // a fade renders it into a full-screen offscreen buffer first.
-        ambient.forceHasOverlappingRendering(false);
+        if (Build.VERSION.SDK_INT >= 24) ambient.forceHasOverlappingRendering(false);
         // The wallpaper layer goes right above the sky backdrop (index 1) and under the ambient glow.
         // Must come after ambient is assigned: the controller's first display() callback touches it.
         wallpapers = new WallpaperController(this, root, 1, visible -> {
@@ -336,7 +306,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         });
         // Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植）：在 WallpaperController 之后、
         // 其它 UI 元素之前插入。用户已在壁纸面板里下载并选择过航拍视频时才生效。
-        aerial = AerialBackdrop.attach(this, root, root.indexOfChild(sky),
+        // 精简版不挂航拍视频壁纸（SurfaceView + MediaPlayer 常驻对老盒子太重）。
+        aerial = BuildConfig.LITE ? null : AerialBackdrop.attach(this, root, root.indexOfChild(sky),
                 AerialBackdrop.chosen(this, getString(R.string.aerial_backdrop)), cfg.backgroundColor);
         if (aerial != null) {
             // 航拍视频有自己的暗角和遮罩；ambient 光晕会盖住视频，隐藏
@@ -346,7 +317,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         hero = findViewById(R.id.hero);
         // The hero is now a group (name, and the cinematic lines): without this every fade of the default
         // shelf would render it through an offscreen buffer first, as the glow above notes.
-        hero.forceHasOverlappingRendering(false);
+        if (Build.VERSION.SDK_INT >= 24) hero.forceHasOverlappingRendering(false);
         heroMeta = findViewById(R.id.heroMeta);
         heroDots = findViewById(R.id.heroDots);
         heroArt = findViewById(R.id.heroArt);
@@ -590,16 +561,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         packageFilter.addDataScheme("package");
         timeFilter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
 
-        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (tim != null) tim.registerCallback(inputCallback, handler);
-        if (cm != null) {
-            cm.registerDefaultNetworkCallback(networkCallback);
-            cm.registerNetworkCallback(new NetworkRequest.Builder()
-                    .addTransportType(NetworkCapabilities.TRANSPORT_VPN)
-                    .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
-                    .build(), vpnCallback);
-        }
+        // 网络/输入源回调：API 21+ 才注册（4.4 上 attach 返回 null，输入源菜单也不显示）
+        api21 = HomeApi21.attach(this, handler, this::updateWifiLabel, this::updateInputsButton, !vpnApp.isEmpty());
         // Not after recreate(): the launch intent survives it and would open the settings again.
         if (savedInstanceState == null) openLauncherSettingsIfAsked(getIntent());
     }
@@ -621,15 +584,39 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         super.onNewIntent(intent);
         if (openLauncherSettingsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
-        grid.scrollToPosition(0);
         lastFocused = 0;
         lastFocusedKey = adapter.getItemCount() > 0 ? adapter.keyAt(0) : null;
         rebuildOnResume = true;
+        scrollToTopClean();
+    }
+
+    /**
+     * 回顶（tvhome-zh v1.4.1 移植）：先收起玻璃高亮，滚到 0，等布局这一帧过去再把高亮贴到第一个磁贴上。
+     * 直接 scrollToPosition(0) 后立刻定位会量到即将被回收的旧行，高亮弹到屏幕左上角。
+     */
+    private void scrollToTopClean() {
+        if (adapter == null || adapter.getItemCount() == 0) {
+            grid.scrollToPosition(0);
+            return;
+        }
+        hideGlass();
+        grid.scrollToPosition(0);
+        grid.post(() -> {
+            RecyclerView.ViewHolder vh = grid.findViewHolderForAdapterPosition(0);
+            if (vh == null) {
+                focusTile(0);          // 还没布局好：focusTile 会等滚动结束
+                return;
+            }
+            View card = vh.itemView.findViewById(R.id.card);
+            onTileFocused(0, card);    // 已经聚焦时不会再来焦点事件，手动贴一次
+            card.requestFocus();
+        });
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        started = true;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(timeReceiver, timeFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -653,6 +640,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         if (rebuildOnResume) {
             tilesReady = false;
             reloadApps(true);
+        }
+        if (memoryReleased) {
+            // 内存紧张时壁纸位图被放开（tvhome-zh v1.4.1 移植）：回桌面重新解码
+            memoryReleased = false;
+            wallpapers.restore();
         }
         rebuildOnResume = false;
         updateGreeting();
@@ -726,6 +718,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
      */
     private void reloadTiles() {
         if (reordering) endReorder();   // an app installed or removed while reordering: keep the order so far
+        // 内存紧张时 adapter 被从 grid 上摘掉了（tvhome-zh v1.4.1 移植）：重建磁贴前先挂回去
+        if (grid.getAdapter() == null) grid.setAdapter(adapter);
         // Read these before reload(): rebinding can move focus to the first tile and overwrite them.
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
@@ -792,10 +786,32 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     protected void onStop() {
         super.onStop();
+        started = false;
         unregisterReceiver(packageReceiver);
         unregisterReceiver(timeReceiver);
         handler.removeCallbacks(clockCheck);
         rebuildOnResume = true;
+    }
+
+    /**
+     * 系统要内存时把磁贴封面图和壁纸位图还给系统（tvhome-zh v1.4.1 / 上游 PR #585 移植）。
+     *
+     * 桌面在屏幕上时绝不放手：无障碍服务会让进程留在前台，RUNNING_LOW/CRITICAL 那时也会到，
+     * 把老大正看着的桌面清空比省内存更糟。所以只有 Home 已 onStop（started=false）才动手，
+     * 回桌面时 onResume → reloadApps() 重建磁贴、wallpapers.restore() 重解壁纸。
+     */
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        boolean due = level >= TRIM_MEMORY_BACKGROUND
+                || level == TRIM_MEMORY_RUNNING_LOW || level == TRIM_MEMORY_RUNNING_CRITICAL;
+        if (!due || started || adapter == null) return;
+        adapter.clear();
+        // 停掉后不会再跑 layout，磁贴视图和它们持有的位图还挂在 RecyclerView 上，必须一起摘掉。
+        grid.setAdapter(null);
+        grid.getRecycledViewPool().clear();
+        wallpapers.releaseBitmaps();
+        memoryReleased = true;
     }
 
     @Override
@@ -811,13 +827,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     protected void onDestroy() {
         super.onDestroy();
         wallpaperPlayer.close();
-        ConnectivityManager cm = getSystemService(ConnectivityManager.class);
-        TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
-        if (tim != null) tim.unregisterCallback(inputCallback);
-        if (cm != null) {
-            cm.unregisterNetworkCallback(networkCallback);
-            cm.unregisterNetworkCallback(vpnCallback);
-        }
+        if (api21 != null) api21.detach();
     }
 
     /**
@@ -1333,12 +1343,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     /** The parts that never change: a larger name, the meta line and the dots, the artwork and the scrim. */
     private void setUpCinematicShelf() {
         heroName.setTextSize(TypedValue.COMPLEX_UNIT_SP, 68f);
-        heroName.setLetterSpacing(-0.025f);
+        if (Build.VERSION.SDK_INT >= 21) heroName.setLetterSpacing(-0.025f);
         heroMeta.setVisibility(View.INVISIBLE);   // keeps its height, so the name does not jump when it fills in
         heroDots.setVisibility(View.VISIBLE);
         heroArt.setVisibility(View.VISIBLE);
         // One stretched bitmap: apply its alpha while drawing instead of through an offscreen buffer.
-        heroArt.forceHasOverlappingRendering(false);
+        if (Build.VERSION.SDK_INT >= 24) heroArt.forceHasOverlappingRendering(false);
         View scrim = findViewById(R.id.heroScrim);
         scrim.setBackground(scrimDrawable());
         scrim.setVisibility(View.VISIBLE);
@@ -1482,7 +1492,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             ambient.setBackground(glow);
         }
         // The default tint mode, SRC_IN, keeps the mask's alpha and takes the colour from the tint.
-        glow.setTint(0xFF000000 | color);
+        Legacy.tint(glow, 0xFF000000 | color);
     }
 
     private void transitionAmbient(int color) {
@@ -1980,18 +1990,30 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         try {
             ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
             boolean wifi = false, ethernet = false;
-            // All networks, not just the active one: with a VPN up the active network is the VPN itself.
-            for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
-                NetworkCapabilities caps = cm.getNetworkCapabilities(net);
-                if (caps == null) continue;
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                    vpn = true;
-                    continue;
+            if (Build.VERSION.SDK_INT >= 21) {
+                // All networks, not just the active one: with a VPN up the active network is the VPN itself.
+                for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
+                    NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                    if (caps == null) continue;
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                        vpn = true;
+                        continue;
+                    }
+                    if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue;
+                    online = true;
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) ethernet = true;
+                    if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) wifi = true;
                 }
-                if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) continue;
-                online = true;
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) ethernet = true;
-                if (caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) wifi = true;
+            } else {
+                // 4.4：没有 NetworkCapabilities，用老的 NetworkInfo（含以太网判定）。
+                android.net.NetworkInfo ni = cm != null ? cm.getActiveNetworkInfo() : null;
+                online = ni != null && ni.isConnected();
+                if (online) {
+                    int type = ni.getType();
+                    wifi = type == ConnectivityManager.TYPE_WIFI;
+                    ethernet = type == ConnectivityManager.TYPE_ETHERNET;
+                    vpn = type == ConnectivityManager.TYPE_VPN;
+                }
             }
             if (!online) {
                 text = getString(R.string.offline);
@@ -2018,7 +2040,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         if (vpn || vpnDown) {
             // Network name, then the green lock-and-VPN (or red "VPN off") capsule drawn in place of the word.
             String badge = getString(vpn ? R.string.vpn : R.string.vpn_off);
-            VpnBadge span = new VpnBadge(vpn ? getDrawable(R.drawable.ic_lock) : null, density);
+            VpnBadge span = new VpnBadge(vpn ? Legacy.drawable(this, R.drawable.ic_lock) : null, density);
             // The pill has a maximum width and ellipsizes at the end, which would cut the badge off after
             // a long network name, so shorten the name to whatever room the badge leaves. The total paddings
             // include the Wi-Fi icon.
@@ -2091,7 +2113,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private static void setFestiveIcon(TextView pill, Drawable icon) {
         // The pills tint their icons to follow focus; the festive ones keep their own colours.
-        pill.setCompoundDrawableTintList(null);
+        if (Build.VERSION.SDK_INT >= 23) pill.setCompoundDrawableTintList(null);
         pill.setCompoundDrawablesRelativeWithIntrinsicBounds(icon, null, null, null);
     }
 
@@ -2122,7 +2144,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     /** The network pill opens the VPN app when one is configured and installed, otherwise Wi-Fi settings. */
     private void openNetworkPill() {
-        Intent i = vpnApp.isEmpty() ? null : getPackageManager().getLeanbackLaunchIntentForPackage(vpnApp);
+        Intent i = Legacy.leanbackIntent(getPackageManager(), vpnApp);
         if (i == null && !vpnApp.isEmpty()) i = getPackageManager().getLaunchIntentForPackage(vpnApp);
         open(i != null ? i : systemIntent(Settings.ACTION_WIFI_SETTINGS));
     }
@@ -2145,11 +2167,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     /** Hides the Inputs pill when it would have nothing to list: streaming boxes have no HDMI-in, AV or tuner. */
     private void updateInputsButton() {
         boolean any = liveTvIntent() != null || !sourcePanelService.isEmpty();
+        // 4.4 没有 TvInputManager（API 21 才有），不做 HDMI 探测：有 Live TV/源面板才显示输入源按钮。
+        if (Build.VERSION.SDK_INT < 21) {
+            btnInputs.setVisibility(any ? View.VISIBLE : View.GONE);
+            return;
+        }
         TvInputManager tim = (TvInputManager) getSystemService(TV_INPUT_SERVICE);
         if (!any && tim != null) {
             for (TvInputInfo info : tim.getTvInputList()) {
                 // Inputs hidden in Settings > Inputs are left out of the menu, so they don't count here either.
-                if (info.isPassthroughInput() && !info.isHidden(this)) {
+                if (info.isPassthroughInput() && !TvCompat.isHidden(this, info)) {
                     any = true;
                     break;
                 }
@@ -2161,7 +2188,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     /** The Live TV app's launch intent: its leanback entry point, or the configured action if it has none. */
     private Intent liveTvIntent() {
         if (liveTvPkg.isEmpty()) return null;
-        Intent i = getPackageManager().getLeanbackLaunchIntentForPackage(liveTvPkg);
+        Intent i = Legacy.leanbackIntent(getPackageManager(), liveTvPkg);
         if (i != null || liveTvAction.isEmpty()) return i;
         Intent byAction = new Intent(liveTvAction).setPackage(liveTvPkg);
         return getPackageManager().resolveActivity(byAction, 0) != null ? byAction : null;
@@ -2197,6 +2224,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
      *  which the Live TV app handles; where nothing takes that, the configured `input_action` is sent
      *  with the same URI instead (XGIMI's HDMI player only answers com.xgimi.action.hdmiPlayer). */
     private void openInput(String inputId) {
+        // buildChannelUriForPassthroughInput 要 API 21；4.4 上根本不会列出来源（见 showInputs），这里只是兜底。
+        if (Build.VERSION.SDK_INT < 21) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return;
+        }
         Uri uri = TvContract.buildChannelUriForPassthroughInput(inputId);
         Intent view = new Intent(Intent.ACTION_VIEW).setDataAndType(uri, "vnd.android.cursor.item/channel")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -2218,6 +2250,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         // The BYINTEK U4 needs this, as its TvInputManager lists three HDMI ports and an AV input it doesn't have.
         if (!sourcePanelService.isEmpty() && liveTvIntent() == null) {
             openSourcePanel();
+            return;
+        }
+        // 4.4 精简版：TvInputManager 整个框架不存在，没有 HDMI 端口可列。
+        // 有厂商源面板就直接打开，没有就提示，不再给假入口。
+        if (Build.VERSION.SDK_INT < 21) {
+            if (!sourcePanelService.isEmpty()) openSourcePanel();
+            else if (liveTvIntent() != null) open(liveTvIntent());
+            else Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
             return;
         }
         View anchor = findViewById(R.id.btnInputs);
@@ -2251,7 +2291,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             for (TvInputInfo info : inputs) {
                 String parent = info.getParentId();
                 if (parent == null || !inputIds.contains(parent)) continue;
-                if (!info.isPassthroughInput() || info.isHidden(this)) continue;
+                if (!info.isPassthroughInput() || TvCompat.isHidden(this, info)) continue;
                 List<TvInputInfo> onPort = cecDevices.get(parent);
                 if (onPort == null) cecDevices.put(parent, onPort = new ArrayList<>());
                 onPort.add(info);
@@ -2288,14 +2328,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     }
                 }
                 // Inputs hidden in the TV's Settings > Inputs stay out of the menu too.
-                if (!info.isPassthroughInput() || info.isHidden(this)) continue;
+                if (!info.isPassthroughInput() || TvCompat.isHidden(this, info)) continue;
                 // A CEC device's row is added with its port, below.
                 if (info.getParentId() != null && inputIds.contains(info.getParentId())) continue;
                 CharSequence l = info.loadLabel(this);
                 String label = l == null ? info.getId() : l.toString();
                 boolean hdmi = info.getType() == TvInputInfo.TYPE_HDMI;
                 if (hdmi && !label.toUpperCase(Locale.ROOT).contains("HDMI")) label = "HDMI " + label;
-                CharSequence custom = info.loadCustomLabel(this);
+                CharSequence custom = TvCompat.customLabel(this, info);
                 boolean named = custom != null && custom.length() > 0 && !custom.toString().equals(label);
                 if (!hdmi && rows.getChildCount() > 0 && !sawNonHdmi) addSeparator(rows);
                 if (!hdmi) sawNonHdmi = true;
@@ -2305,7 +2345,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     // Settings > Inputs), then the port. Opening the device's input also makes it the CEC
                     // active source, which wakes it.
                     for (TvInputInfo device : devices) {
-                        CharSequence name = device.loadCustomLabel(this);
+                        CharSequence name = TvCompat.customLabel(this, device);
                         if (name == null || name.length() == 0) name = named ? custom : device.loadLabel(this);
                         String deviceLabel = name == null || name.length() == 0 ? label : name + " \u00B7 " + label;
                         final String deviceId = device.getId();
@@ -2363,7 +2403,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         popup.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));   // needed for Back to dismiss
         popup.setOutsideTouchable(true);
         popup.setAnimationStyle(0);
-        popup.setElevation(0f);
+        if (Build.VERSION.SDK_INT >= 21) popup.setElevation(0f);
         popup.setOnDismissListener(() -> {
             if (openPopup == popup) openPopup = null;
         });

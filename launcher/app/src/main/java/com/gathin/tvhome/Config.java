@@ -295,6 +295,8 @@ final class Config {
         if (chosenRows >= 0 && chosenRows <= 3) rowsBelow = chosenRows;
         animations = choices.getBoolean("animations", animations);
         advancedEffects = choices.getBoolean("advanced_effects", advancedEffects);
+        // 减弱动画：遥控器上可切换（tvhome-zh v1.4.1 移植），电视端选择覆盖 config.xml / 主题
+        reducedMotion = choices.getBoolean("reduced_motion", reducedMotion);
         File wallpaper = dir != null ? new File(dir, WALLPAPER_NAME) : null;
         if (wallpaper != null && !(wallpaper.isFile() && wallpaper.length() > 0)) wallpaper = null;
         // A theme can also switch the wallpaper off while the file is still there.

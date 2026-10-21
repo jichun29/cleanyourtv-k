@@ -20,6 +20,8 @@ public class GlassView extends View {
     private final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
+    /** 光晕用的临时矩形（重用，不在 draw 里 new）。 */
+    private final RectF glowRect = new RectF();
     private final float density;
     private float radius;
     /** Glow colour as 0xRRGGBB: white normally, a festival's accent (diya gold) while a festive skin is on. */
@@ -81,10 +83,11 @@ public class GlassView extends View {
             glow.setStrokeWidth(i * 2f * density);
             glow.setColor((glowAlpha / i) << 24 | glowRgb);
             float o = i * density;
-            canvas.drawRoundRect(rect.left - o, rect.top - o, rect.right + o, rect.bottom + o, radius + o, radius + o, glow);
+            glowRect.set(rect.left - o, rect.top - o, rect.right + o, rect.bottom + o);
+            canvas.drawRoundRect(glowRect, radius + o, radius + o, glow);
         }
 
-        canvas.drawRoundRect(rect, radius, radius, fill);
+        canvas.drawRoundRect(rect, radius, radius, fill);   // RectF 版本从 API 1 就有
 
         // Sheen across the top 45%: clipRect stays on the GPU (clipPath did not on the MT5895) and
         // the round rect under it keeps the top corners rounded with a flat bottom edge.

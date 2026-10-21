@@ -107,7 +107,8 @@ final class WallpaperController {
         shade.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         background.addView(shade, new FrameLayout.LayoutParams(-1, -1));
         display(useDefault ? -1 : (bingMode ? -2 : index), false);
-        refreshBing();
+        // 精简版不在启动时联网拉必应图（老盒子开机本来就慢，别再加一次网络+解码）。
+        if (!BuildConfig.LITE) refreshBing();
     }
 
     /** 启动时后台拉一次必应今日图（开了开关且今天没拉过才真的下载），拉到就切换显示。 */
@@ -240,6 +241,23 @@ final class WallpaperController {
 
     void resume() { active = true; schedule(); }
 
+    /** 内存紧张时放开壁纸位图（满屏 1080p RGB_565 约 4MB）；从后台回来时 restore() 重新解码。 */
+    void releaseBitmaps() {
+        if (transition != null) {
+            transition.end();
+            transition = null;
+        }
+        current.setImageDrawable(null);
+        incoming.setImageDrawable(null);
+        incoming.setAlpha(0);
+        shown = -2;   // 下次 display() 必定重新解码
+    }
+
+    /** 释放过位图后重新显示当前壁纸。 */
+    void restore() {
+        if (shown == -2) display(useDefault ? -1 : (bingMode ? -2 : index), false);
+    }
+
     void pause() {
         active = false;
         main.removeCallbacks(rotate);
@@ -264,6 +282,7 @@ final class WallpaperController {
 
     /** Apple Aerial 航拍壁纸下载商店（遥控器操作）。从壁纸面板进入，picker 已关闭。 */
     private void showAerialStore() {
+        if (BuildConfig.LITE) return;   // 精简版没有航拍入口
         Dialog store = new Dialog(activity);
         FrameLayout content = new FrameLayout(activity);
         TextView title = label("航拍视频壁纸", 24);
@@ -398,11 +417,14 @@ final class WallpaperController {
         place(content, auto, 144, 40, 620, 42);
 
         // 必应每日壁纸开关（tvhome-zh 移植）：打开后每天自动换必应今日图
+        // 精简版（Android 4.4/5.0 老盒子）不显示必应每日壁纸：每天联网下载 + 解码一张图，负担不值当。
+        final boolean hasBing = !BuildConfig.LITE;
         TextView bingBtn = label(bingMode || bing.enabled() ? "必应每日壁纸：开" : "必应每日壁纸：关", 14);
         bingBtn.setGravity(Gravity.CENTER);
-        bingBtn.setFocusable(true);
+        bingBtn.setFocusable(hasBing);
         bingBtn.setBackground(border(false));
-        place(content, bingBtn, 190, 40, 780, 42);
+        if (hasBing) place(content, bingBtn, 190, 40, 780, 42);
+        else bingBtn.setVisibility(View.GONE);
 
         TextView status = label("", 14);
         status.setGravity(Gravity.CENTER);
@@ -466,7 +488,7 @@ final class WallpaperController {
                 return true;
             }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) bingBtn.requestFocus();
+                if (event.getAction() == KeyEvent.ACTION_DOWN && hasBing) bingBtn.requestFocus();
                 return true;
             }
             return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_LEFT;
@@ -507,11 +529,14 @@ final class WallpaperController {
         });
 
         // Apple Aerial 航拍视频壁纸下载/管理入口
+        // 精简版不显示航拍视频壁纸：几十 MB 解码 + SurfaceView 常驻，老盒子扛不住。
+        final boolean hasAerial = !BuildConfig.LITE;
         TextView aerialBtn = label(activity.getString(R.string.aerials_download), 14);
         aerialBtn.setGravity(Gravity.CENTER);
-        aerialBtn.setFocusable(true);
+        aerialBtn.setFocusable(hasAerial);
         aerialBtn.setBackground(border(false));
-        place(content, aerialBtn, 190, 40, 986, 42);
+        if (hasAerial) place(content, aerialBtn, 190, 40, 986, 42);
+        else aerialBtn.setVisibility(View.GONE);
         aerialBtn.setOnFocusChangeListener((v, focus) -> {
             aerialBtn.setBackground(border(focus));
             if (focus) status.setText("下载 Apple 航拍视频壁纸（首次需联网，几十 MB）");
@@ -522,7 +547,7 @@ final class WallpaperController {
         });
         aerialBtn.setOnKeyListener((v, key, event) -> {
             if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) bingBtn.requestFocus();
+                if (event.getAction() == KeyEvent.ACTION_DOWN && hasBing) bingBtn.requestFocus();
                 return true;
             }
             return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
@@ -535,7 +560,7 @@ final class WallpaperController {
                 return true;
             }
             if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) aerialBtn.requestFocus();
+                if (event.getAction() == KeyEvent.ACTION_DOWN && hasAerial) aerialBtn.requestFocus();
                 return true;
             }
             return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN;

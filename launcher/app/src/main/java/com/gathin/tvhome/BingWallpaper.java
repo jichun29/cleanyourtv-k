@@ -114,7 +114,9 @@ final class BingWallpaper {
             c.setReadTimeout(TIMEOUT);
             c.setInstanceFollowRedirects(true);
             if (c.getResponseCode() / 100 != 2) return null;
-            if (c.getContentLengthLong() > MAX_BYTES) return null;
+            // Content-Length 的 long 版要 API 24；必应图只有几百 KB，int 版足够判断。
+            long declared = android.os.Build.VERSION.SDK_INT >= 24 ? c.getContentLengthLong() : c.getContentLength();
+            if (declared > MAX_BYTES) return null;
             try (InputStream in = c.getInputStream()) {
                 ByteArrayOutputStream bos = new ByteArrayOutputStream();
                 byte[] buf = new byte[16384];

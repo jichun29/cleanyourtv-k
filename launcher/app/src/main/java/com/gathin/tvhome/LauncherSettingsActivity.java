@@ -21,12 +21,14 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] rowChoices = new TextView[4];
     private TextView wallpaperChoice;
     private TextView animationsChoice;
+    private TextView motionChoice;
     private TextView advancedChoice;
     private TextView followThemeChoice;
     private int columns;
     private int rowsBelowDock;
     private boolean animations;
     private boolean advancedEffects;
+    private boolean reducedMotion;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -38,6 +40,7 @@ public final class LauncherSettingsActivity extends Activity {
         rowsBelowDock = config.rowsBelowDock;
         animations = config.animations;
         advancedEffects = config.animations && config.advancedEffects;
+        reducedMotion = config.reducedMotion;
 
         int[] ids = {R.id.columns4, R.id.columns5, R.id.columns6, R.id.columns7};
         for (int i = 0; i < ids.length; i++) {
@@ -81,6 +84,15 @@ public final class LauncherSettingsActivity extends Activity {
             refresh();
         });
         advancedChoice = findViewById(R.id.advancedChoice);
+        // 减弱动画开关（tvhome-zh v1.4.1 移植）：弱 GPU/低端电视一键关掉弹簧与淡入，
+        // 聚焦放大保留（放大是状态不是动作，关掉玻璃会正好盖住图标变白斑）。
+        motionChoice = findViewById(R.id.motionChoice);
+        motionChoice.setOnClickListener(v -> {
+            reducedMotion = !reducedMotion;
+            choices.edit().putBoolean("reduced_motion", reducedMotion).apply();
+            setResult(RESULT_OK);
+            refresh();
+        });
         advancedChoice.setOnClickListener(v -> {
             if (advancedEffects) {
                 setAdvanced(false);
@@ -184,6 +196,8 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(animations ? R.string.on : R.string.off)));
         advancedChoice.setText(getString(R.string.advanced_effects_state,
                 getString(advancedEffects ? R.string.on : R.string.off)));
+        motionChoice.setText(getString(R.string.reduced_motion_state,
+                getString(reducedMotion ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
         String wallpaperCurrent = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
@@ -197,6 +211,7 @@ public final class LauncherSettingsActivity extends Activity {
     private boolean hasOnTvChoices() {
         return choices.contains("columns") || choices.contains(Config.ROWS_BELOW_DOCK_KEY)
                 || choices.contains("animations") || choices.contains("advanced_effects")
+                || choices.contains("reduced_motion")
                 || choices.contains(Config.WALLPAPER_CHOICE_KEY);
     }
 

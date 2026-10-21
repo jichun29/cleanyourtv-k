@@ -8,8 +8,42 @@
 <resources>
 
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
-    <!-- K 定制: 清空默认 Dock, 让电视上手动调整的顺序生效, 避免每次编译覆盖 -->
     <string-array name="dock_apps">
+        <!-- Dock: 老大指定的 4 个 -->
+        <item>com.baipiaozhe.tv</item>          <!-- 白嫖者 TV -->
+        <item>com.foni.andrid.fan</item>        <!-- 饭太硬 -->
+        <item>com.ktcp.csvideo</item>           <!-- 云视听极光(腾讯视频 TV) -->
+        <item>com.tv.qx</item>                  <!-- 千寻直播 -->
+
+        <!-- 影视类 -->
+        <item>com.github.tvbox.osc.juo</item>   <!-- TVBox -->
+        <item>com.tastysoup.tv</item>           <!-- 茶杯狐 -->
+        <item>com.xx.blbl</item>                <!-- BBLL(B站) -->
+
+        <!-- 直播类 -->
+        <item>com.xftv.tv</item>                <!-- 小飞电视 -->
+        <item>com.wolf.lmu</item>               <!-- 狼狼 -->
+        <item>com.trim.tv</item>                <!-- Trim TV -->
+
+        <!-- 市场类 -->
+        <item>com.dangbeimarket</item>          <!-- 当贝市场 -->
+        <item>com.ant.store.appstore</item>     <!-- 蚂蚁市场 -->
+        <item>fun.yecao.helper</item>           <!-- 野草助手 -->
+
+        <!-- 工具类 -->
+        <item>org.xbmc.kodi</item>              <!-- Kodi -->
+        <item>com.quark.yun.tv</item>           <!-- 夸克网盘 TV -->
+        <item>com.xiaobaifile.tv</item>         <!-- 小白文件 -->
+        <item>net.xmhx3.helper</item>           <!-- XMind Helper -->
+
+        <!-- 音乐类 -->
+        <item>com.tencent.qqmusictv</item>      <!-- QQ 音乐 TV -->
+
+        <!-- 海外兜底(其它电视用) -->
+        <item>com.netflix.ninja</item>
+        <item>com.amazon.amazonvideo.livingroom</item>
+        <item>com.google.android.youtube.tv</item>
+        <item>com.disney.disneyplus</item>
     </string-array>
     <!-- With fewer dock_apps than columns (or a dock app that is not installed), the free dock slots take
          the first grid apps, so the dock never shows a gap. false leaves them empty (#162); a theme can

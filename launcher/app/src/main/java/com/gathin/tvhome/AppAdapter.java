@@ -226,6 +226,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     /**
+     * 内存紧张时放开所有磁贴和封面图（tvhome-zh v1.4.1 移植）。banner 是桌面占内存的大头，
+     * 回到桌面时 reload() 会重建。
+     */
+    void clear() {
+        items.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
      * Rebuilds the tiles. A shown module card stands in for every tile of its package (same component,
      * so focus follows it); hidden_apps wins over a card, and a card's package in dock_apps takes that slot.
      */
@@ -297,7 +306,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                 && pm.resolveActivity(new Intent(Settings.ACTION_HOME_SETTINGS), 0) != null) {
             fresh.add(new Entry(Entry.HOME_SETTINGS, ctx.getString(R.string.home_settings),
                     new ComponentName(ctx, HomeSettingsActivity.class), null,
-                    ctx.getDrawable(R.drawable.ic_home_settings), null, 0));
+                    Legacy.drawable(ctx, R.drawable.ic_home_settings), null, 0));
         }
         docked = 0;
         while (docked < fresh.size() && favourites.contains(fresh.get(docked).pkg)) docked++;
@@ -315,23 +324,23 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private Drawable bundledBanner(String name) {
         if (name == null || !name.startsWith("banner_")) return null;
         int id = ctx.getResources().getIdentifier(name, "drawable", ctx.getPackageName());
-        return id != 0 ? ctx.getDrawable(id) : null;
+        return id != 0 ? Legacy.drawable(ctx, id) : null;
     }
 
     private Drawable loadBanner(PackageManager pm, ResolveInfo ri) {
-        int id = ri.activityInfo.banner;
-        if (id == 0) id = ri.activityInfo.applicationInfo.banner;
+        int id = Legacy.bannerId(ri.activityInfo);
+        if (id == 0) id = Legacy.bannerId(ri.activityInfo.applicationInfo);
         Drawable banner = null;
         if (id != 0) {
             try {
                 Resources resources = pm.getResourcesForApplication(ri.activityInfo.applicationInfo);
                 // Keep at least xhdpi detail rather than downsampling artwork before the focus zoom.
-                int density = Math.max(DisplayMetrics.DENSITY_XHIGH, ctx.getResources().getDisplayMetrics().densityDpi);
-                banner = resources.getDrawableForDensity(id, density, null);
+                int density = Legacy.highDensity(ctx);
+                banner = Legacy.drawableForDensity(resources, id, density, null);
             } catch (PackageManager.NameNotFoundException | Resources.NotFoundException ignored) {
             }
         }
-        if (banner == null) banner = ri.activityInfo.loadBanner(pm);
+        if (banner == null) banner = Legacy.loadBanner(ri.activityInfo, pm);
         // A square "banner" counts as none: the tile shows the app's icon and name instead of a blur.
         return banner != null && isBannerShaped(banner.getIntrinsicWidth(), banner.getIntrinsicHeight()) ? banner : null;
     }
@@ -410,7 +419,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         h.card.setScaleX(focused && animations ? focusScale() : 1f);
         h.card.setScaleY(focused && animations ? focusScale() : 1f);
         h.card.setTranslationY(focused && advancedEffects ? -4f * ctx.getResources().getDisplayMetrics().density : 0f);
-        h.card.setTranslationZ(focused && advancedEffects ? 8f * ctx.getResources().getDisplayMetrics().density : 0f);
+        Legacy.translationZ(h.card, focused && advancedEffects ? 8f * ctx.getResources().getDisplayMetrics().density : 0f);
         h.banner.setScaleX(focused && advancedEffects ? 1.035f : 1f);
         h.banner.setScaleY(focused && advancedEffects ? 1.035f : 1f);
         // A fully opaque banner covers the whole card (centerCrop), so the card's own fill under it is drawn for
@@ -795,14 +804,8 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             this.restNameAlpha = restNameAlpha;
 
             final float density = v.getResources().getDisplayMetrics().density;
-            card.setOutlineProvider(new ViewOutlineProvider() {
-                @Override
-                public void getOutline(View view, Outline outline) {
-                    // 16dp at the design width, scaled down with the tile so small tiles keep the same shape.
-                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius(view.getWidth(), density));
-                }
-            });
-            card.setClipToOutline(true);
+            // 圆角裁剪：API 21+ 走 outline（和磁贴圆角一致）；4.4 不裁剪，靠 XML 背景。
+            Legacy.roundCorner(card);
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
@@ -822,15 +825,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     view.setScaleX(1f);
                     view.setScaleY(1f);
                     view.setTranslationY(0f);
-                    view.setTranslationZ(0f);
+                    Legacy.translationZ(view, 0f);
                     banner.setScaleX(1f);
                     banner.setScaleY(1f);
                     name.setAlpha(focused ? 1f : restNameAlpha);
                     name.setTranslationY(0f);
                 } else if (reducedMotion) {
-                    view.animate().scaleX(s).scaleY(s)
-                            .translationY(focused && advancedEffects ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
+                    Legacy.translationZ(view.animate().scaleX(s).scaleY(s)
+                            .translationY(focused && advancedEffects ? -4f * density : 0f),
+                            focused && advancedEffects ? 8f * density : 0f)
                             .setDuration(focused ? 120 : 80)
                             .setInterpolator(new DecelerateInterpolator())
                             .withLayer().start();
@@ -840,9 +843,9 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
                     // Only on focus: snapping it back to -6dp while it fades out would jump it up over the tile.
                     if (focused) name.setTranslationY(density * 4f);
                 } else {
-                    view.animate().scaleX(s).scaleY(s)
-                            .translationY(focused && advancedEffects ? -4f * density : 0f)
-                            .translationZ(focused && advancedEffects ? 8f * density : 0f)
+                    Legacy.translationZ(view.animate().scaleX(s).scaleY(s)
+                            .translationY(focused && advancedEffects ? -4f * density : 0f),
+                            focused && advancedEffects ? 8f * density : 0f)
                             .setDuration(advancedEffects ? (focused ? 220 : 170) : (focused ? 260 : 180))
                             .setInterpolator(new OvershootInterpolator(focused ? (advancedEffects ? 0.7f : 1.6f) : 0f))
                             .withLayer().start();

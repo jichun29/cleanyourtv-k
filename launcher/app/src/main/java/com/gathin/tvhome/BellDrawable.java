@@ -165,7 +165,9 @@ public final class BellDrawable extends Drawable {
         Rect b = getBounds();
         if (b.isEmpty()) return;
         float s = Math.min(b.width(), b.height()) / BOX;
-        int save = alpha < 255 ? c.saveLayerAlpha(b.left, b.top, b.right, b.bottom, alpha) : c.save();
+        // saveLayerAlpha 在 API 21 才有；4.4 上用 save() + 直接画（轻微透明差异）
+        int save = alpha < 255 && android.os.Build.VERSION.SDK_INT >= 21
+                ? c.saveLayerAlpha(b.left, b.top, b.right, b.bottom, alpha) : c.save();
         c.clipRect(b);
         c.translate(b.exactCenterX() - 12f * s, b.exactCenterY() - 12f * s);
         c.scale(s, s);

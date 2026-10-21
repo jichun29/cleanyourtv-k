@@ -75,7 +75,7 @@ final class RemoteKeys {
 
     /** Opens an app from a remote button: its TV entry if it has one, else its phone entry. */
     static void launch(Context ctx, String pkg) {
-        Intent open = ctx.getPackageManager().getLeanbackLaunchIntentForPackage(pkg);
+        Intent open = Legacy.leanbackIntent(ctx.getPackageManager(), pkg);
         if (open == null) open = ctx.getPackageManager().getLaunchIntentForPackage(pkg);
         if (open == null) return;
         try {
