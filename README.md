@@ -40,14 +40,14 @@
 
 ## 下载
 
-见 [Releases](../../releases) 页面，两个版本：
+见 [Releases](../../releases) 页面，两个对外版本（同一版本号，按设备选）：
 
 | 版本 | 说明 |
 |---|---|
-| `CleanYourTV-Launcher-universal.apk` | **通用版**：默认 Dock（Netflix/YouTube 等），适合所有人，装完自己在设置里改 |
-| `CleanYourTV-Launcher-K.apk` | 作者自用版：Dock 和网格顺序是给国内电视观影场景定制的（TVBox/直播/市场类 App），仅供参考 |
+| `CleanYourTV-Launcher-universal.apk` | **通用版**：默认 Dock（Netflix/YouTube 等），适合绝大多数 Android TV / Google TV（Android 8.0+ / minSdk 26） |
+| `CleanYourTV-Launcher-N1.apk` | **N1 定制版**：斐讯 N1 盒子刷 YYF/当贝等 Android 7.1 固件专用（minSdk 25，开启 desugar + 减弱动画） |
 
-> 大多数人下**通用版**就行。Dock 内容、隐藏 App、列数全都可以在 `config.xml` 或电视上的 Launcher 设置页里改。
+> 两个版本功能完全一致，只是 Android 系统版本下限不同。大多数人下**通用版**就行；只有 N1 这种老固件装不上通用版时才用 N1 版。Dock 内容、隐藏 App、列数全都可以在 `config.xml` 或电视上的 Launcher 设置页里改。
 
 ## 编译
 
