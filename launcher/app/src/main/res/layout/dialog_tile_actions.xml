@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Tile actions dialog: glass panel style matching the launcher (tvOS-like frosted).
-     Shown on long-press OK or MENU key on an app tile. -->
+     Shown on MENU key on an app tile. K 定制 v3.1: 打开/置顶到最前/移动位置/管理·卸载/应用信息 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -52,24 +52,59 @@
             android:paddingEnd="20dp"
             android:text="@string/action_open"
             android:gravity="center_vertical"
+            android:nextFocusUp="@+id/btnInfo"
+            android:nextFocusDown="@+id/btnTop" />
+
+        <TextView
+            android:id="@+id/btnTop"
+            style="@style/TopButton"
+            android:layout_width="match_parent"
+            android:layout_marginStart="0dp"
+            android:layout_marginBottom="10dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/action_top"
+            android:gravity="center_vertical"
             android:nextFocusUp="@+id/btnOpen"
-            android:nextFocusDown="@+id/btnDetails"
-            android:nextFocusLeft="@+id/btnOpen"
-            android:nextFocusRight="@+id/btnOpen" />
+            android:nextFocusDown="@+id/btnMove" />
+
+        <TextView
+            android:id="@+id/btnMove"
+            style="@style/TopButton"
+            android:layout_width="match_parent"
+            android:layout_marginStart="0dp"
+            android:layout_marginBottom="10dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/action_move"
+            android:gravity="center_vertical"
+            android:nextFocusUp="@+id/btnTop"
+            android:nextFocusDown="@+id/btnDetails" />
 
         <TextView
             android:id="@+id/btnDetails"
             style="@style/TopButton"
             android:layout_width="match_parent"
             android:layout_marginStart="0dp"
+            android:layout_marginBottom="10dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:text="@string/action_details"
             android:gravity="center_vertical"
-            android:nextFocusUp="@+id/btnOpen"
-            android:nextFocusDown="@+id/btnDetails"
-            android:nextFocusLeft="@+id/btnDetails"
-            android:nextFocusRight="@+id/btnDetails" />
+            android:nextFocusUp="@+id/btnMove"
+            android:nextFocusDown="@+id/btnInfo" />
+
+        <TextView
+            android:id="@+id/btnInfo"
+            style="@style/TopButton"
+            android:layout_width="match_parent"
+            android:layout_marginStart="0dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/action_info"
+            android:gravity="center_vertical"
+            android:nextFocusUp="@+id/btnDetails"
+            android:nextFocusDown="@+id/btnOpen" />
     </LinearLayout>
 
     <TextView

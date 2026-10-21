@@ -86,7 +86,7 @@ import java.util.Set;
 /**
  * tvOS style home: black, a pinned dock row, an app grid, and one glass highlight that springs between tiles.
  */
-public class MainActivity extends Activity implements AppAdapter.TileListener {
+public class MainActivity extends Activity implements AppAdapter.TileListener, TileActionHost {
 
     private static final int LAUNCHER_SETTINGS_REQUEST = 42;
     /** Sent by QuickSettingsActivity: open Launcher settings from here so Home rebuilds when they close. */
@@ -956,6 +956,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (pos >= adapter.movableCount()) return;   // the "Default home" tile stays put
         movingKey = adapter.keyAt(pos);
         dimOthers();
+    }
+
+    /** K 定制:菜单键弹窗「移动位置」——进入重排模式并直接拿起指定 tile。 */
+    @Override
+    public void startReorderCarrying(String key) {
+        if (key == null) return;
+        if (!reordering && !beginReorder()) return;
+        int pos = adapter.positionOf(key);
+        if (pos < 0 || pos >= adapter.movableCount()) return;
+        movingKey = key;
+        dimOthers();
+        focusTile(pos);
+        Toast.makeText(this, R.string.reorder_hint, Toast.LENGTH_LONG).show();
     }
 
     /** Puts the carried tile down where it is; the mode stays on. */

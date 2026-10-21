@@ -443,13 +443,59 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         android.widget.TextView title = dlg.findViewById(R.id.title);
         android.widget.TextView pkg = dlg.findViewById(R.id.pkg);
         android.widget.TextView btnOpen = dlg.findViewById(R.id.btnOpen);
+        android.widget.TextView btnTop = dlg.findViewById(R.id.btnTop);
+        android.widget.TextView btnMove = dlg.findViewById(R.id.btnMove);
         android.widget.TextView btnDetails = dlg.findViewById(R.id.btnDetails);
+        android.widget.TextView btnInfo = dlg.findViewById(R.id.btnInfo);
         title.setText(e.label);
         pkg.setText(e.pkg);
         btnOpen.setOnClickListener(v -> { dlg.dismiss(); launch(e); } );
+        btnTop.setOnClickListener(v -> { dlg.dismiss(); moveToFront(e); });
+        btnMove.setOnClickListener(v -> { dlg.dismiss(); startMoveMode(e); });
         btnDetails.setOnClickListener(v -> { dlg.dismiss(); openAppDetails(e.pkg); });
+        btnInfo.setOnClickListener(v -> { dlg.dismiss(); openAppInfo(e.pkg); });
         btnOpen.requestFocus();
         dlg.show();
+    }
+
+    /** 置顶到最前:把该 tile 移到第 0 位并保存顺序(K 定制)。 */
+    private void moveToFront(Entry e) {
+        String key = e.component.flattenToShortString();
+        int from = positionOf(key);
+        if (from <= 0) return;   // 已在最前
+        move(from, 0);
+        persistOrder();
+        Toast.makeText(ctx, ctx.getString(R.string.action_moved_top, e.label), Toast.LENGTH_SHORT).show();
+    }
+
+    /** 移动位置:进入重排模式并直接拿起该 tile(MainActivity 接管后续按键)。 */
+    private void startMoveMode(Entry e) {
+        if (ctx instanceof TileActionHost) {
+            ((TileActionHost) ctx).startReorderCarrying(e.component.flattenToShortString());
+        }
+    }
+
+    /** 应用信息:标准详情页优先(能看到版本/权限/存储占用),失败回退到管理页。 */
+    private void openAppInfo(String pkg) {
+        Intent std = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg));
+        std.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            ctx.startActivity(std);
+            return;
+        } catch (ActivityNotFoundException ignored) {
+        }
+        openAppDetails(pkg);
+    }
+
+    /** 把当前 tile 顺序写回 Order 文件(置顶/移动后调用),与 MainActivity.endReorder 的保存逻辑一致。 */
+    private void persistOrder() {
+        List<String> keys = movableKeys();
+        Order order = new Order(Order.dockKey(favourites), keys);
+        if (Order.save(Order.file(ctx), order)) {
+            setSavedOrder(Order.ranks(order, favourites));
+        } else {
+            Toast.makeText(ctx, R.string.reorder_not_saved, Toast.LENGTH_SHORT).show();
+        }
     }
 
     /** 跳到应用管理页。标准 ACTION_APPLICATION_DETAILS_SETTINGS 优先;小米国行走电视管家的应用管理/卸载页。 */
