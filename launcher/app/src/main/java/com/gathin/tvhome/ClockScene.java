@@ -26,6 +26,7 @@ final class ClockScene {
     private final GradientDrawable glow;
     private int colorIndex;
     private int glowColor;
+    private boolean firstPlace = true;
 
     private final Runnable tick = new Runnable() {
         @Override
@@ -70,13 +71,25 @@ final class ClockScene {
         }).start();
     }
 
-    /** A random spot that keeps the whole clock on screen, with the glow centred behind it. */
+    /** 首次居中；之后每分钟小幅漂移（±10%），防烧屏但不跑偏。 */
     private void placeClock() {
         View parent = (View) content.getParent();
         int maxX = Math.max(0, parent.getWidth() - content.getWidth());
         int maxY = Math.max(0, parent.getHeight() - content.getHeight());
-        float x = maxX * (0.1f + 0.8f * random.nextFloat());
-        float y = maxY * (0.1f + 0.8f * random.nextFloat());
+        float x, y;
+        if (firstPlace) {
+            // 首次：靠 layout_gravity=center 居中，不用算坐标
+            firstPlace = false;
+            return; // 不 setX/setY，保持 layout 居中
+        } else {
+            // 之后：以中心为基准 ±10% 漂移
+            float cx = (parent.getWidth() - content.getWidth()) / 2f;
+            float cy = (parent.getHeight() - content.getHeight()) / 2f;
+            float rangeX = maxX * 0.2f;
+            float rangeY = maxY * 0.2f;
+            x = cx + (random.nextFloat() - 0.5f) * rangeX;
+            y = cy + (random.nextFloat() - 0.5f) * rangeY;
+        }
         content.setX(x);
         content.setY(y);
         if (parent.getWidth() > 0 && parent.getHeight() > 0) {
