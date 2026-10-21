@@ -151,6 +151,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private String greetingName = "";
     /** Optional time-of-day backdrop (config.xml, sky_intensity); 0 keeps it hidden. */
     private SkyView sky;
+    /** Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植），null = 未启用或未下载视频。 */
+    private AerialBackdrop aerial;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -328,6 +330,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             // stays visible, it sits under the opaque picture and costs nothing.
             ambient.setVisibility(visible ? View.GONE : View.VISIBLE);
         });
+        // Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植）：在 WallpaperController 之后、
+        // 其它 UI 元素之前插入。用户已在壁纸面板里下载并选择过航拍视频时才生效。
+        aerial = AerialBackdrop.attach(this, root, root.indexOfChild(sky),
+                AerialBackdrop.chosen(this, getString(R.string.aerial_backdrop)), cfg.backgroundColor);
+        if (aerial != null) {
+            // 航拍视频有自己的暗角和遮罩；ambient 光晕会盖住视频，隐藏
+            ambient.setVisibility(View.GONE);
+        }
         heroName = findViewById(R.id.heroName);
         hero = findViewById(R.id.hero);
         // The hero is now a group (name, and the cinematic lines): without this every fade of the default
@@ -627,6 +637,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         updateInputsButton();
         if (showStats) startStats();
         sky.update();
+        if (aerial != null) aerial.resume();
         wallpaperPlayer.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
@@ -725,6 +736,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     protected void onPause() {
         super.onPause();
         endReorder();   // Home or another app while reordering keeps the order so far
+        if (aerial != null) aerial.pause();   // 释放视频解码器给其它 App
         wallpaperPlayer.stop();
         stopAmbientAnimation();
         hero.animate().cancel();
@@ -1180,6 +1192,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             grid.requestChildRectangleOnScreen(item, revealRect, reducedMotion);
         }
+        // 航拍视频：焦点进 grid（非 Dock）时调暗背景，图标更突出（tvOS 行为）
+        if (aerial != null) aerial.setGridFocused(dockRow && position >= COLUMNS);
     }
 
     /** Refits the glass to the focused holder once the grid layout and tile dimensions settle. */

@@ -9,13 +9,8 @@
 
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
-        <!-- Dock: 老大指定的 4 个 -->
-        <item>com.baipiaozhe.tv</item>          <!-- 白嫖者 TV -->
-        <item>com.foni.andrid.fan</item>        <!-- 饭太硬 -->
+        <!-- Dock: 通用影视/直播/工具应用（按使用频率排序） -->
         <item>com.ktcp.csvideo</item>           <!-- 云视听极光(腾讯视频 TV) -->
-        <item>com.tv.qx</item>                  <!-- 千寻直播 -->
-
-        <!-- 影视类 -->
         <item>com.github.tvbox.osc.juo</item>   <!-- TVBox -->
         <item>com.tastysoup.tv</item>           <!-- 茶杯狐 -->
         <item>com.xx.blbl</item>                <!-- BBLL(B站) -->
@@ -34,7 +29,6 @@
         <item>org.xbmc.kodi</item>              <!-- Kodi -->
         <item>com.quark.yun.tv</item>           <!-- 夸克网盘 TV -->
         <item>com.xiaobaifile.tv</item>         <!-- 小白文件 -->
-        <item>net.xmhx3.helper</item>           <!-- XMind Helper -->
 
         <!-- 音乐类 -->
         <item>com.tencent.qqmusictv</item>      <!-- QQ 音乐 TV -->
@@ -195,6 +189,10 @@
          shelf. Can also be set with "cinematic_home": true in a theme's config.json. -->
     <!-- K 定制: 电影感顶栏(焦点移到 Dock App 时顶部显示官方艺术图虚化背景+上次打开时间+位置圆点) -->
     <bool name="cinematic_home">true</bool>
+
+    <!-- Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植）。默认空 = 不启用；
+         在壁纸设置面板里下载一个后，可在这里填文件名（如 north_america_aurora.mov）设为开机默认。 -->
+    <string name="aerial_backdrop" translatable="false"></string>
 
     <!-- K 定制 v3.3: 减弱动画（低配电视/盒子卡顿就开，来自 tvhome-zh 的同款开关） -->
     <!-- <bool name="reduced_motion">true</bool> 取消注释即开启 -->

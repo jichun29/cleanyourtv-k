@@ -81,6 +81,17 @@
     <string name="action_info">应用信息</string>
     <string name="action_hint">返回键关闭 · 上下选择 · 确定执行</string>
     <string name="action_moved_top">已置顶：%1$s</string>
+    <string name="aerials_download">下载航拍壁纸…</string>
+    <string name="aerials_loading">正在加载 Apple 航拍列表…</string>
+    <string name="aerials_offline">无法连接 Apple。请检查电视网络。</string>
+    <string name="aerials_on_tv">已在电视</string>
+    <string name="aerials_get">下载</string>
+    <string name="aerials_percent">%d%%</string>
+    <string name="aerials_done">%s 已就绪，可在壁纸设置中选用</string>
+    <string name="aerials_removed">已删除 %s</string>
+    <string name="aerials_busy">一次只能下载一个，请等待当前下载完成</string>
+    <string name="aerials_failed">下载失败，请重试。</string>
+    <string name="aerials_no_space">空间不足：需要 %1$d MB，电视仅剩 %2$d MB</string>
     <string name="dock_edit">Edit dock</string>
     <string name="dock_edit_hint">Choose the dock place to change and press OK. Back to finish.</string>
     <string name="dock_edit_pick_app">Now choose the app to put there and press OK. Back to choose another place.</string>
