@@ -119,6 +119,8 @@ Android 5.0 及以上的设备请直接用通用版，功能一个不少。
 
 ## 📢 电视去广告库（174 机型）+ AI 一键部署指令词
 
+> 不知道怎么开电视的 ADB？看这份：[各品牌电视开启 ADB 的方法](docs/tv-adb-guide.md)
+
 仓库里自带 [`debloat/`](debloat/) 目录：**174 个电视/盒子/投影机型**的去广告清单（小米 26 台、TCL 43 台、海信 8 台、索尼 6 台、创维/长虹/海尔/康佳/一加/极米/Shield/Fire TV 等 90+ 台），每条注明这个包是干什么的、停用后失去什么。**只停用、不卸载，随时一键还原。**详见 [debloat/README.md](debloat/README.md) 和品牌索引 [debloat/brands.md](debloat/brands.md)。
 
 ### 给 AI 机器人的完整指令词（复制即用）
@@ -126,8 +128,9 @@ Android 5.0 及以上的设备请直接用通用版，功能一个不少。
 把整个仓库交给 AI，粘贴下面这段话，它就能帮你完成「装桌面 + 去广告」全流程：
 
 ```
+请先扫描我局域网内的电视设备（常见 ADB 端口 5555），找到电视后告诉我型号和 IP。
+如果我知道 IP 就直接用：我的电视型号是【填型号，如「小米 Mi TV 4A」】，电视 IP 是【填 IP，如 192.168.1.50】。
 请克隆 https://github.com/jichun29/cleanyourtv-k 仓库并阅读 README.md 与 debloat/README.md。
-我的电视型号是【填型号，如「小米 Mi TV 4A」】，电视 IP 是【填 IP】。
 请按顺序完成：
 1. 根据我的电视系统版本选择安装包：Android 5.0 及以上装通用版
    （launcher 编译或 Releases 里的 CleanYourTV-Launcher-universal.apk），
