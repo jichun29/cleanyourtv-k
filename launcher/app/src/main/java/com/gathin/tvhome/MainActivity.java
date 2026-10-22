@@ -962,6 +962,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 }
                 return okHeld || okLongPressFired;
             }
+            // 已经在重排模式里：OK 是「放下」，不是「弹菜单」
+            if (reordering) return false;
             int pos = focusedTilePosition();
             if (pos < 0 || adapter == null) return false;
             AppAdapter.Entry e = adapter.getEntryAt(pos);

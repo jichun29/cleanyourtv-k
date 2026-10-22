@@ -52,20 +52,7 @@
             android:paddingEnd="20dp"
             android:text="@string/action_open"
             android:gravity="center_vertical"
-            android:nextFocusUp="@+id/btnInfo"
-            android:nextFocusDown="@+id/btnTop" />
-
-        <TextView
-            android:id="@+id/btnHide"
-            style="@style/TopButton"
-            android:layout_width="match_parent"
-            android:layout_marginStart="0dp"
-            android:layout_marginBottom="10dp"
-            android:paddingStart="20dp"
-            android:paddingEnd="20dp"
-            android:text="@string/action_hide"
-            android:gravity="center_vertical"
-            android:nextFocusUp="@+id/btnOpen"
+            android:nextFocusUp="@+id/btnHide"
             android:nextFocusDown="@+id/btnTop" />
 
         <TextView
@@ -78,7 +65,7 @@
             android:paddingEnd="20dp"
             android:text="@string/action_top"
             android:gravity="center_vertical"
-            android:nextFocusUp="@+id/btnHide"
+            android:nextFocusUp="@+id/btnOpen"
             android:nextFocusDown="@+id/btnMove" />
 
         <TextView
@@ -112,11 +99,24 @@
             style="@style/TopButton"
             android:layout_width="match_parent"
             android:layout_marginStart="0dp"
+            android:layout_marginBottom="10dp"
             android:paddingStart="20dp"
             android:paddingEnd="20dp"
             android:text="@string/action_info"
             android:gravity="center_vertical"
             android:nextFocusUp="@+id/btnDetails"
+            android:nextFocusDown="@+id/btnHide" />
+
+        <TextView
+            android:id="@+id/btnHide"
+            style="@style/TopButton"
+            android:layout_width="match_parent"
+            android:layout_marginStart="0dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="@string/action_hide"
+            android:gravity="center_vertical"
+            android:nextFocusUp="@+id/btnInfo"
             android:nextFocusDown="@+id/btnOpen" />
     </LinearLayout>
 
