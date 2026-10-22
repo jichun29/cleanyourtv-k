@@ -288,6 +288,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
         idleClockMs = cfg.homeIdleClockMinutes * MINUTE_MS;
+
+        // Android 9+ 读 WiFi SSID 需要位置权限（运行时申请，只弹一次）
+        if (Build.VERSION.SDK_INT >= 23
+                && checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+        }
         liveTvAction = cfg.liveTvAction;
         inputAction = cfg.inputAction;
         sourcePanelService = cfg.sourcePanelService;
@@ -2257,6 +2264,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 if (ssid != null) {
                     ssid = ssid.replace("\"", "").trim();
                     if (!ssid.isEmpty() && !ssid.contains("unknown") && !ssid.equals("0x")) text = ssid;
+                }
+                // Android 9+ 没有位置权限时 getSSID() 返回 <unknown ssid>。
+                // 从 ConnectivityManager 的 NetworkCapabilities 里再拿一次（部分机型能拿到）。
+                if (getString(R.string.wifi).equals(text) && Build.VERSION.SDK_INT >= 21) {
+                    for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
+                        NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                            String capStr = caps.toString();
+                            int ssidStart = capStr.indexOf("SSID: \"");
+                            if (ssidStart >= 0) {
+                                int ssidEnd = capStr.indexOf("\"", ssidStart + 7);
+                                if (ssidEnd > ssidStart + 7) {
+                                    text = capStr.substring(ssidStart + 7, ssidEnd);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                // 还拿不到就用反射读 NetworkCapabilities 的 mSsid 字段（Android 9 部分机型有）
+                if (getString(R.string.wifi).equals(text) && Build.VERSION.SDK_INT >= 21) {
+                    try {
+                        java.lang.reflect.Field f = NetworkCapabilities.class.getDeclaredField("mSsid");
+                        f.setAccessible(true);
+                        for (Network net : cm != null ? cm.getAllNetworks() : new Network[0]) {
+                            NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                            if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                                String s = (String) f.get(caps);
+                                if (s != null && !s.isEmpty() && !s.contains("unknown")) {
+                                    text = s;
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
                 }
             }
         } catch (Exception ignored) {

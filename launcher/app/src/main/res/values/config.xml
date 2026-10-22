@@ -126,8 +126,8 @@
     <!-- K 2026-10-22：应用库按钮也放回顶栏。顶栏 = 信号源 / 网络 / 应用库 / 设置 四个。 -->
     <bool name="library_button">true</bool>
     <!-- With icon_only_buttons: keep the network name on the Wi-Fi pill up to this width in dp, cut with an ellipsis.
-         0 leaves the Wi-Fi pill as an icon. -->
-    <integer name="wifi_label_width">0</integer>
+         0 leaves the Wi-Fi pill as an icon. K 2026-10-22：给 200dp，够显示常见 WiFi 名。 -->
+    <integer name="wifi_label_width">200</integer>
 
     <!-- The Wi-Fi/Ethernet pill in the top bar. false hides it (on Android 14 with Location off it can
          only say "Wi-Fi", not the network name). Can also be set with "show_network_pill" in a theme. -->
