@@ -1,0 +1,20 @@
+{
+  "dock_apps": [
+    "com.google.android.youtube.tv",
+    "com.netflix.ninja",
+    "com.globo.globotv",
+    "com.amazon.amazonvideo.livingroom"
+  ],
+  "hidden_apps": [
+    "com.tcl.tv",
+    "com.tcl.suspension"
+  ],
+  "live_tv_package": "com.tcl.tv",
+  "columns": 4,
+  "rows_below_dock": 0,
+  "app_keys": [
+    "4062:com.netflix.ninja",
+    "4099:com.amazon.amazonvideo.livingroom",
+    "4065:com.google.android.youtube.tv"
+  ]
+}

@@ -1,0 +1,54 @@
+# Philips TPM191E (TP Vision, device PH9M_EA_5599, MediaTek mt5887), Europe
+# Android TV 12 (API 31), firmware STT2.230526.001, security patch 2025-11-01.
+# Fingerprint: Philips/PH9M_EA_5599/PH9M_EA_5599:12/STT2.230526.001/4215:user/release-keys
+# About 2 GB RAM, armeabi-v7a. Vendor packages use the org.droidtv prefix.
+#
+# Not the same board as examples/philips-50pus8517 (PH1M_EA_9970A, Android 11) or
+# examples/philips-55pus7503 (TPM171E, Android 8); entries shared with those lists were checked
+# against this TV's own `pm list packages`.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/philips-tpm191e/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/philips-tpm191e/debloat.txt com.google.android.tvlauncher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.tvlauncher
+# The uk.co.freeview.* packages and org.droidtv.freeviewplayers are disabled from the factory on
+# this unit, so they are not listed (restore.sh would turn them ON).
+#
+# Kept on purpose: org.droidtv.amazonalexa (Alexa power on/off), com.google.android.apps.mediashell
+# (Chromecast), org.droidtv.oad and com.easy.oad (firmware updates), org.droidtv.eum (see the
+# philips-50pus8517 list: xtv retries forever without it and the sources drawer dies).
+
+# Batch 1: telemetry and retail demo
+org.droidtv.candeebug                     # "DAC" analytics uploader
+org.droidtv.gel                           # metrics collector sharing candeebug's process
+org.droidtv.usagelogger                   # boot stats, remote keypress counts, panel telemetry
+org.droidtv.demome                        # "Demo me" retail demo mode
+com.google.android.feedback               # Market Feedback Agent
+com.google.android.partnersetup           # partner referrer / attribution
+com.google.android.onetimeinitializer     # runs once at first setup, nothing afterwards
+com.google.android.syncadapters.calendar  # Google Calendar sync; no calendar app installed
+
+# Batch 2: Philips promotions
+org.droidtv.nettvrecommender              # "Top Picks" content promotion row
+org.droidtv.recommendation                # its headless backend; listed after the row on purpose
+org.droidtv.nettv.market                  # "Smart TV Collection" app storefront; the Play Store stays
+
+# Batch 3: apps this owner does not use
+com.google.android.katniss                # Assistant and voice search; the remote's mic button and "Hey Google" stop. Alexa is separate
+com.amazon.amazonvideo.livingroom         # Prime Video
+com.google.android.videos                 # Google TV / Play Movies
+com.google.android.music                  # Google Play Music, discontinued service
+com.google.android.youtube.tvmusic        # YouTube Music
+com.google.android.play.games
+com.google.android.marvin.talkback        # TalkBack screen reader; keep if anyone needs it
+org.droidtv.dlna                          # DLNA/UPnP server and renderer
+# com.phorus.playfi.tv                    # DTS Play-Fi: does NOT stay disabled. Back to enabled=1 after a reboot
+#                                         # (AudioOutService logs "PlayFi Enabled" at boot), so left enabled
+com.phorus.playfi.softap                  # DTS Play-Fi soft access point
+
+# Batch 4: after launcher/build-and-install.sh has moved Home and disabled com.google.android.tvlauncher.
+# The stock launcher holds a stable provider reference into this package, so disabling it first would
+# kill the live launcher. It is also the only handler for the notification side panel
+# (OPEN_NOTIFICATIONS_PANEL, TOGGLE_NOTIFICATION_HANDLER_PANEL) on this firmware: that panel goes too.
+com.google.android.tvrecommendations      # "Android TV Core Services": recommendation rows, notification panel

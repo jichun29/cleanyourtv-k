@@ -1,0 +1,60 @@
+# Hisense SmartTV 4K FFM (device huangshan, MediaTek), Android TV 10, firmware QTG3.200902.001
+# Security patch 2023-02-05. Sold in Latin America; the Android model string is "SmartTV 4K FFM".
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/hisense-smarttv-4k-ffm/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/hisense-smarttv-4k-ffm/debloat.txt
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# WARNING, read before applying: a first version of this list that also disabled
+# com.hisense.tv.smartsense, com.vt.tv.smartsense.ui and com.vt.tv.aiot sent the TV to Android
+# Recovery on the next boot ("Can't load Android system. Your data may be corrupt"). "Try again"
+# booted normally and tools/restore.sh undid everything. Which of the three was the cause is not
+# confirmed, so all three are left out below. Never pick "Factory data reset" on that screen
+# before trying "Try again".
+# This list was then applied in seven groups with a reboot after each: no crashes, normal boot.
+# If you experiment with more packages, reboot after each small group, and wait ~15 s after
+# pm disable-user before rebooting: rebooting immediately lost the change on this TV.
+#
+# Keep: com.mediatek.* (including com.mediatek.wwtv.tvcenter, the Live TV and HDMI app),
+# com.hisense.tv.hitvinput, com.hisense.tv.smartservice, com.vidaa.persistent.service,
+# com.hisense.tv.customerlauncher. HDMI-CEC and the inputs keep working with this list.
+# Stock launcher: com.google.android.tvlauncher (the default in restore.sh).
+# Already disabled at the factory: net.vidaatv.android.tv, Pandora, Vudu, Play Games.
+
+# Hisense telemetry: ACR ("Enhanced Viewing" content recognition and data-sharing consent)
+com.hisense.evservice
+
+# Hisense content, preloads and push messages
+net.vidaatv.hisense.android.tv         # VIDAA app preload
+com.hisense.fte                        # first-time experience
+com.hisense.hibrowser
+com.hisense.service.message            # Hisense push messages
+
+# Retail demo / store / hotel mode
+com.hisense.storemode
+com.hisense.hotelmode
+com.hisense.tv.b2b
+com.demo
+
+# Firmware updates. Re-enable all three to receive an OTA update.
+com.hisense.tv.ota
+com.hisense.remoteupgrade
+com.vt.tv.usbota
+
+# Google home-screen content
+com.google.android.tvrecommendations
+com.google.android.videos              # Google TV movies
+com.google.android.youtube.tvmusic
+
+# Voice assistants. The remote's microphone button stops working.
+com.hisense.alexa
+com.google.android.tv.assistant
+com.google.android.katniss             # Google Assistant and voice search
+
+# Do NOT disable (see warning above): com.hisense.tv.smartsense, com.vt.tv.smartsense.ui, com.vt.tv.aiot
+# Optional, kept here: com.hisense.tv.hisremotenow and com.hisense.tv.hisremotenowserver (RemoteNOW
+# phone app). Checked with dumpsys and kept because they look tied to the system or features:
+# com.vt.tv.aipq (picture quality), com.hisense.tv.protector, com.hisense.kpad, com.hisense.favkey,
+# com.hisense.uifac, com.hisense.tv.rcs, com.hisense.mixbar, com.hisense.tv.dlna,
+# com.jamdeo.tv.mediacenter (USB media), com.hisense.audio_update_service, com.vt.eula,
+# com.hisense.tv.videocolor.

@@ -1,0 +1,40 @@
+# Xiaomi MiTV-AESP0 (codename aquaman), Android TV 9 (SDK 28), firmware PI.2055.
+# Stock launcher: com.google.android.tvlauncher (disabled by launcher/build-and-install.sh).
+# Live TV app: none (no tuner/HDMI inputs); com.google.android.tv is Live Channels.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-aesp0/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-aesp0/debloat.txt
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Notes from this firmware:
+# - Default IME is already Gboard, so the Mi TV 4A missing-keyboard quirk doesn't apply.
+# - The remote's Home button sends KEYCODE_ALL_APPS (284), not HOME. Android 9 sends that key only
+#   to the system launcher, so with tvlauncher disabled Home does nothing. Fix: install with
+#     HOME_KEY_SERVICE=1 TV_HOST=<tv ip> launcher/build-and-install.sh
+#   which enables the launcher's HomeKeyService. Android switches it off on every reinstall,
+#   so always pass HOME_KEY_SERVICE=1.
+#   `input keyevent 284` over adb skips the accessibility filter; test with the real remote.
+# - No HDMI/AV inputs: the launcher hides its Inputs pill by itself on this stick.
+# - Kept on this set: voice assistant (katniss/pumpkin), Chromecast (mediashell),
+#   Mi Cast (com.mitv.milinkservice) and firmware updates (com.xiaomi.mitv.updateservice).
+
+# Xiaomi + Google telemetry
+com.miui.tv.analytics
+com.google.android.feedback
+com.google.android.tv.bugreportsender
+tv.alphonso.alphonso_eula                   # Alphonso automatic content recognition (viewing tracking)
+
+# PatchWall, content rows, sponsored rows
+com.mitv.tvhome.atv
+com.mitv.tvhome.michannel
+com.xm.webcontent
+com.google.android.tvrecommendations
+android.autoinstalls.config.xiaomi.mibox3   # Play auto-install of partner apps
+android.autoinstalls.config.xioami.mibox3   # same, misspelled duplicate (sic, "xioami")
+
+# Preloaded apps
+com.dazn
+com.nousguide.android.rbtv                  # Red Bull TV
+com.google.android.apps.tachyon             # Google Duo
+com.google.android.play.games
+com.tcl.browser

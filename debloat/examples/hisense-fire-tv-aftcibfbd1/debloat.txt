@@ -1,0 +1,70 @@
+# Hisense Fire TV (Fire TV Edition, AFTCIBFBD1, codename coyote, MediaTek), Fire OS 8.0 / Android 11 (SDK 30),
+# firmware RS8180.3734N, US. The first Fire OS 8 TV (Fire TV Edition) here. amazon-fire-tv-stick-4k-2023/ (Fire OS 8.1)
+# goes further on packages and its notes apply here too; this list adds what is TV-specific: Alexa voice coming back at
+# every boot, and HDMI input switching being reserved to Amazon.
+#
+# FIRE OS: DEBLOAT ONLY. As on Fire OS 7, com.amazon.tv.launcher and com.amazon.firehomestarter are protected
+# (pm disable-user and am force-stop are refused) and keep Home. Live TV app: com.amazon.tv.livetv.
+#
+# Apply:  TV_HOST=<tv ip> tools/disable.sh examples/hisense-fire-tv-aftcibfbd1/debloat.txt
+# Undo:   TV_HOST=<tv ip> tools/restore.sh examples/hisense-fire-tv-aftcibfbd1/debloat.txt com.amazon.tv.launcher
+# Everything is DISABLED for user 0, not uninstalled. Comment out any line you want to keep.
+#
+# Lived with since 2026-10-19, through several reboots: Netflix, YouTube, Prime Video, Spotify, Settings, the Network
+# page, Live TV settings and HDMI inputs (via the remote's Input button) all work.
+#
+# Fire OS 8 notes:
+# - com.amazon.vizzini (Alexa voice) comes back ENABLED AT EVERY BOOT. Neither pm disable-user, pm suspend,
+#   `appops set ... RECORD_AUDIO ignore` (not even applied) nor pm uninstall -k --user 0
+#   (DELETE_FAILED_INTERNAL_ERROR) survives a reboot; re-run this list after one. Everything else stays off.
+# - Two packages are protected (pm disable-user is refused), so they are commented out below:
+#   com.amazon.ftvads.deeplinking and com.amazon.device.crashmanager.
+# - AdGuard Private DNS works (mads.amazon-adsystem.com stops resolving) and removes the third-party ad
+#   in the hero banner; Amazon's own promotions stay, they come from the protected launcher.
+# - Input switching is Amazon-only: its player needs com.amazon.tv.permission.TUNE_INPUT (signature|amazon) and
+#   its picker com.amazon.tv.inputpreference.permission.LAUNCH_INPUTS (signature|privileged). The standard
+#   passthrough URI opens Live TV's settings instead of the input, so a launcher's Inputs button can't switch here.
+#
+# Kept on purpose: Amazon Kids (com.amazon.tahoe), OTA updates, Live TV, settings, Silk, Appstore, the stock launcher.
+# Personal choices are marked below: Alexa, AirPlay, Miracast and the preloaded apps.
+
+# Ads, shopping and content recognition
+com.amazon.shoptv.client               # Shop on Fire TV
+com.amazon.tv.acr                      # Automatic Content Recognition (what's on screen, HDMI included)
+com.amazon.tv.democontent.provider     # retail demo content
+com.amazon.media.recommendations       # sponsored and recommendation rows
+com.amazon.sneakpeek                   # autoplaying previews on Home
+com.amazon.hybridadidservice           # advertising ID
+# com.amazon.ftvads.deeplinking        # ad deep links: protected on this firmware
+
+# Telemetry and metrics
+com.amazon.wirelessmetrics.service     # Wi-Fi metrics upload
+com.amazon.perfcollection              # performance telemetry
+com.amazon.perfc                       # performance telemetry
+com.amazon.dp.logger                   # device log upload
+com.amazon.device.telemetry.emitter    # telemetry emitter
+# com.amazon.device.crashmanager       # crash report upload: protected on this firmware
+
+# Tutorials
+com.amazon.storm.lightning.tutorial
+com.amazon.tmm.tutorial
+
+# Alexa (personal choice; vizzini comes back at every boot, see the header)
+com.amazon.vizzini                     # Alexa voice on Fire TV
+com.amazon.tv.alexaalerts
+com.amazon.tv.alexanotifications
+com.amazon.alexamediaplayer.runtime.ftv
+com.amazon.alexa.externalmediaplayer.fireos
+
+# Casting (personal choice)
+com.apple.airplay.amazon.airplay       # AirPlay receiver: keep if you cast from an iPhone or Mac
+com.amazon.cast.sink                   # Miracast screen mirroring
+
+# Preloaded apps (personal choice)
+com.tubitv.ott                         # Tubi
+com.amazon.bueller.music               # Amazon Music
+com.amazon.bueller.photos              # Amazon Photos
+com.amazon.minitv.android.app          # miniTV
+com.amazon.naatyam                     # Naatyam
+com.amazon.gamehub                     # games hub
+com.amazon.tv.ftvambient               # Ambient Experience screensaver

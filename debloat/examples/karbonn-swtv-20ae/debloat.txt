@@ -1,0 +1,60 @@
+# Karbonn SWTV-20AE (Skyworth OEM, SW4H, MediaTek), Android TV 10, firmware QTG3.200617.002
+# ro.product.manufacturer=skyworth, device SW4H, API 29, armeabi-v7a, ~1.68 GB RAM.
+# Stock launcher: com.google.android.tvlauncher (classic Android TV home, not Google TV launcherx).
+# Live TV: com.smartdevice.livetv / com.mediatek.tvinput.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/karbonn-swtv-20ae/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/karbonn-swtv-20ae/debloat.txt com.google.android.tvlauncher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Tested on the day of debloat and confirmed working. Same Skyworth SW4H platform as the
+# Panasonic 4KTV-0SU and OnePlus Y1. com.sky.market is a protected package: the firmware
+# refuses pm disable-user for it (SecurityException); it stays on.
+#
+# Performance tweaks for 1.68 GB RAM (32-bit armeabi-v7a, MediaTek):
+#   settings put global window_animation_scale 0.5
+#   settings put global transition_animation_scale 0.5
+#   settings put global animator_duration_scale 0.5
+#   settings put global background_process_limit 2
+# Set reduced_motion: true in your theme's config.json for the CleanYourTV launcher.
+
+# Skyworth content, ads and preloads
+com.smartdevice.leanbacklauncher.customizer  # partner config that injects ad rows into home screen
+com.smartdevice.acr.recommendation           # ACR — listens to ambient audio for ad targeting
+com.smartdevice.recommendation               # Skyworth recommendation rows
+com.smartdevice.epopplayer                   # ePop shop demo player
+com.Smartdevice.emanual                      # on-screen manual
+fusion.android.tv.demo                       # retail shop demo player
+com.mstar.android.tv.disclaimercustomization # manufacturer branding/disclaimer screen
+
+# India-specific preloads (never asked for)
+tv.airtel.xstream.tvapp                      # Airtel Xstream
+com.facebook.katana                          # Facebook
+com.community.newroom                        # Community Newroom
+com.community.oneroom                        # Community OneRoom
+com.internet.tvbrowser                       # generic TV browser
+com.qjy.browser                              # unknown browser
+com.yablio.sendfilestotv                     # Send Files to TV
+
+# Telemetry and feedback
+com.google.android.feedback
+com.google.android.tv.bugreportsender
+
+# Ambient screensaver (replaced by the ClockDream screensaver in launcher/)
+com.google.android.backdrop
+
+# Stock home recommendation rows; disable after the new launcher owns Home
+com.google.android.tvrecommendations
+
+# Kept on purpose: com.mediatek.tvinput / com.mediatek.wwtv.setupwizard (HDMI/AV inputs),
+# com.smartdevice.livetv (Live TV), com.smartdevice.firewall (privacy screen, effect unclear),
+# com.tianci.localmedia (USB media), com.google.android.katniss (Assistant),
+# com.google.android.apps.mediashell (Chromecast built-in), com.smartdevice.dtv.icast (casting),
+# com.smartdevice.duplebluetooth (Bluetooth remote), com.graymatrix.did (unknown, kept cautiously),
+# com.android.vending (Play Store), com.google.android.gms (Play Services),
+# com.netflix.ninja, com.amazon.amazonvideo.livingroom, com.google.android.youtube.tv,
+# in.startv.hotstar, app.cricfy.tv, app.netmirror.netmirrornew, com.community.mbox.tv,
+# org.videolan.vlc, com.liskovsoft.leankeyboard, com.alphainventor.filemanager.
+#
+# com.smartdevice.tvworkwithalexa: skipped by disable.sh (TV_INPUT_HARDWARE permission;
+# disabling it blacks out HDMI/AV inputs). Set TVINPUT_ALLOW=1 to force-disable it.

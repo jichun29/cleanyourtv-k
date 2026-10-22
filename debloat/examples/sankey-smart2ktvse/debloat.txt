@@ -1,0 +1,60 @@
+# Sankey SMART2KTVSE (Whale OS)
+# Model: SMART2KTVSE
+# Brand: SiliconPlayer
+# Device: am30bm
+# Android: 13
+# Product: WhaleTV
+# Firmware: (not captured - TV went to sleep)
+#
+# Bloatware/Telemetry packages disabled with pm disable-user
+# Tested and working for several days. Nothing broken.
+#
+# IMPORTANT: How to enable ADB on Whale OS (SMART2KTVSE)
+# - MENU+1147 does NOT work on this model (tested, nothing appears)
+# - To enable ADB: Install "Activity Launcher" app (de.szalkowski.activitylauncher)
+#   via USB, open it, navigate to Settings -> Developer options, enable USB debugging
+# - ADB over WiFi works on port 5555 after enabling
+#
+# Whale OS specific services
+com.zeasn.whaletrackservice    # Tracking/telemetry service
+com.zeasn.whaleservice         # Core Whale OS service
+com.zeasn.tokenapp             # Token management
+com.zeasn.hotelmodelservice    # Hotel mode (not needed for home use)
+com.zeasn.deviceportal.asdprovider.certified  # Device portal
+com.zeasn.tv.cast              # Casting bloat (not the system cast)
+com.zeasn.livetv               # Live TV service - SKIPPED during disable (needed for HDMI inputs)
+com.zeasn.whaleos.settings     # Whale OS settings overlay
+
+# Factory/test apps
+com.hikeen.factorymenu         # Factory menu (MENU+1147 does NOT work on SMART2KTVSE)
+com.hikeen.factoryautomation   # Factory automation
+com.hikeen.middleware.server   # Middleware server
+
+# Voice assistant and runtime
+com.whaletv.aivoice            # AI voice assistant
+com.whaletv.web.app_runtime    # Web app runtime
+
+# Android ad services
+com.android.adservices.api     # Android ad services
+
+# Unknown services
+com.mirakulo.astrotv.service   # Unknown service (safe to disable)
+
+# System updaters (disable to prevent bloat from returning)
+com.droidlogic.updater         # OTA updater
+com.droidlogic.appinstall      # App installer service
+
+# Stock launcher (disabled after CleanYourTV launcher is installed)
+com.whaletv.launcher           # Original Whale TV launcher
+
+# Notes:
+# - com.zeasn.livetv was NOT disabled because it provides the software layer
+#   for HDMI/AV/tuner inputs. Disabling it causes "No Signal" on all inputs.
+# - com.android.camera2 was disabled but is a system app (pm disable-user works,
+#   pm uninstall fails with DELETE_FAILED_INTERNAL_ERROR)
+# - MENU+1147 does NOT work on SMART2KTVSE model (tested, nothing appears)
+# - To enable ADB: Install Activity Launcher app from USB, use it to access
+#   hidden Android Settings -> Developer options -> enable USB debugging
+# - To restore everything: tools/restore.sh sankey-debloat.txt
+# - Stock launcher package: com.whaletv.launcher
+# - Live TV package: com.zeasn.livetv

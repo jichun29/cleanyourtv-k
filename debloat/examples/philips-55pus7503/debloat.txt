@@ -1,0 +1,47 @@
+# Philips 55PUS7503/12 (TP Vision TPM171E, device PH7M_EU_5596), Europe, 2018 model
+# Android TV 8.0.0 (API 26), firmware OC build 4718, security patch 2021-01-05
+# Board TPM17XE_96, MediaTek MT5891, armeabi-v7a, 1.9 GB RAM, 1920x1080.
+# Fingerprint: Philips/PH7M_EU_5596/PH7M_EU_5596:8.0.0/OC/4718:user/release-keys
+#
+# This is the older TPM171E generation, not the Android 11 PH1M_EA_9970A platform in
+# examples/philips-50pus8517 and not the Skyworth-built Google TV 14 Philips. Match the device,
+# board and firmware before applying the list; package names shared across Philips generations
+# do not imply that every package has the same dependencies.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/philips-55pus7503/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/philips-55pus7503/debloat.txt com.google.android.tvlauncher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.tvlauncher
+# Live TV app:    org.droidtv.playtv
+# Launcher config/theme: set live_tv_package to org.droidtv.playtv and add it to hidden_apps.
+#
+# Verified on the real TV: replacement Home, Netflix launch/return, HDMI 1-4, YPbPr and Live TV.
+# The packages below remained disabled across standby and overnight use. This is still a draft:
+# complete a several-day soak test before opening the PR.
+#
+# USB debugging alone opens ADB on TCP 5555. If the RSA authorisation prompt does not appear,
+# fully restart the TV (not standby), return to Android Home and connect again.
+#
+# Kept on purpose: Chromecast (com.google.android.apps.mediashell), Google Assistant
+# (com.google.android.katniss), Alexa, firmware updates, Ambilight/Hue, DLNA, remote/Bluetooth,
+# Philips settings, tuner/HDMI services and every streaming app. In particular, do not disable
+# org.droidtv.GlobalKey, org.droidtv.playtv, org.droidtv.xtv, com.mediatek.tvinput,
+# com.mediatek.tunerservice, org.droidtv.tvsystemui or org.droidtv.settings.
+# The newer Philips list identifies org.droidtv.candeebug + org.droidtv.gel as the DAC analytics
+# pair; both exist here but remain enabled until they have been exercised on this older firmware.
+
+# Google feedback and first-run tutorial
+com.google.android.feedback                       # Market Feedback Agent
+com.google.android.tvtutorials                    # Android TV first-run tutorials
+
+# Philips promotional services and telemetry
+org.droidtv.demome                                # Retail/store demonstration app
+org.droidtv.nettvrecommender                      # Philips NetTV / Top Picks recommendation row
+org.droidtv.usagelogger                           # Philips usage and device logging
+
+# Stock launcher and its recommendation engines, replaced by launcher/
+# Disable the launcher before tvrecommendations: it holds a provider reference into that process.
+com.google.android.tvlauncher
+com.google.android.tvrecommendations              # Android TV recommendations/content rows
+com.google.android.leanbacklauncher.recommendations

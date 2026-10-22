@@ -9,11 +9,11 @@ android {
     defaultConfig {
         // Opt-in identity for firmware with a package-name HOME allowlist; see docs/devices/xiaomi-mitv-aetp0-dofus.md.
         applicationId providers.gradleProperty('launcherApplicationId').getOrElse('com.gathin.tvhome')
-        minSdk 21
+        minSdk 19
         multiDexEnabled true
         targetSdk 34
-        versionCode 110
-        versionName '3.6-K'
+        versionCode 11
+        versionName '3.6-lite'
     }
 
     signingConfigs {

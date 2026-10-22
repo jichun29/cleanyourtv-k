@@ -1,0 +1,67 @@
+# Amazon Fire TV 50" 4K smart TV (AFTTIFF43, codename brandenburg; panel AMZ_K24NE5_4K50M600A),
+# Fire OS 7.7.1.7 / Android 9 (SDK 28), build PS7717.5741N, MediaTek, armeabi-v7a. US.
+# Done remotely over Tailscale through a Synology NAS as subnet router (docs/REMOTE.md, option B).
+#
+# FIRE OS: DEBLOAT ONLY. Home stays com.amazon.tv.launcher/.ui.HomeActivity_vNext (priority 950);
+# the shared launcher does not apply. Same build line as toshiba-fire-tv-aftha004, and the list
+# starts from it plus the ad and tracking packages from insignia-ns55f301na25.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/amazon-fire-tv-afttiff43/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/amazon-fire-tv-afttiff43/debloat.txt com.amazon.tv.launcher
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Protected (pm disable-user refused with "Cannot disable a protected package"), so left out:
+# com.fireos.usagestats.proxy, com.amazon.device.crashmanager, com.amazon.device.metrics,
+# com.amazon.ftvads.deeplinking.
+#
+# Kept on purpose: Alexa core (com.amazon.vizzini, alexadirectivebrokerservice, alexa.datastore;
+# the Alexa and Fire TV phone apps control the TV through it, and voice only listens while the mic
+# button is held), casting (AirPlay com.apple.airplay.amazon.airplay, Miracast com.amazon.cast.sink,
+# DIAL/whisperplay), OTA updates, Live TV and channel scan, Silk (com.amazon.cloud9) and the website
+# launcher, account and sync services, Appstore, HDMI inputs (com.mediatek.tvinput), remote and
+# Bluetooth.
+#
+# Ships with only YouTube installed (com.amazon.firetv.youtube); the Netflix/Prime/Disney+ tiles are
+# placeholders that install on first open. The Amazon-hosted hero banner on Home is not affected by
+# this list; Private DNS (dns.adguard-dns.com) works on this build (private_dns_mode hostname) and
+# blocks doubleclick.net and amazon-adsystem.com, but not YouTube ads.
+#
+# adb exec-out screencap -p prints "Init wrapper sys mutex successful" before the PNG data on this
+# set (docs/TROUBLESHOOTING.md).
+
+# Content recognition, telemetry and metrics
+com.amazon.tv.acr
+com.amazon.tv.fw.metrics
+com.amazon.neo.minerva
+com.amazon.neo.minerva.logcat
+com.amazon.wirelessmetrics.service
+com.amazon.perfcollection
+com.amazon.perfc
+com.amazon.dp.logger
+com.amazon.hybridadidservice              # advertising ID
+
+# Ads, shopping, retail demo, tutorials
+com.amazon.sneakpeek
+com.amazon.tv.democontent.provider
+com.amazon.shoptv.client
+com.amazon.shoptv.firetv.client
+com.amazon.storm.lightning.tutorial
+com.amazon.tmm.tutorial
+
+# Amazon apps (owner's choice)
+com.amazon.bueller.music                  # Amazon Music
+com.amazon.bueller.photos                 # Amazon Photos
+com.amazon.tv.localgallery
+com.amazon.gamehub                        # Luna / Game Hub
+com.amazon.minitv.android.app
+com.amazon.naatyam
+com.amazon.tahoe                          # Amazon Kids
+
+# Alexa extras (Alexa core kept)
+com.amazon.tv.alexaalerts
+com.amazon.tv.alexanotifications
+com.amazon.audiohome                      # Alexa Home Theater
+
+# Screensaver (screensaver_enabled was already 0; idle screen comes from these)
+com.amazon.tv.ftvambient                  # Ambient Experience
+com.amazon.ftv.screensaver

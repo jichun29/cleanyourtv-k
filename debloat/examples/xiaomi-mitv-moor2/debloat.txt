@@ -1,0 +1,81 @@
+# Xiaomi MiTV-MOOR2 (codename venom), Google TV / Android 11, firmware RTM5.220609.003.2674
+# MediaTek chipset.
+#
+# Package names that differ from the repo defaults on this firmware:
+#   stock launcher   com.google.android.apps.tv.launcherx   (NOT com.google.android.tvlauncher)
+#   Live TV app      com.mitv.livetv                        (NOT com.mediatek.wwtv.tvcenter), so set
+#                                                           live_tv_package in the launcher's
+#                                                           res/values/config.xml to it
+# Both are arguments: launcher/build-and-install.sh takes STOCK_LAUNCHER, tools/restore.sh takes the
+# stock launcher as its second argument.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-moor2/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-moor2/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Tested: all 22 packages below are disabled on this TV (`pm list packages -d` confirms it) with the
+# launcher from launcher/ in place and owning Home. They went off in one session, nothing crashed
+# during it and nothing has had to be re-enabled since. That is a first-day report, not the few days
+# of living with it that CONTRIBUTING.md asks for, so treat the list as provisional. The packages
+# under DO NOT DISABLE were ruled out by reading dumpsys, not by disabling them and seeing what
+# broke.
+#
+# DO NOT DISABLE on this model, verified with dumpsys:
+#   com.mitv.livetv              owns .input.SelectInputActivity - the HDMI/source switcher lives
+#                                inside the Live TV app, so disabling it costs you input switching
+#   mitv.service                 PERSISTENT; hosts .TvServer, .TvSettingService, remote key handling
+#   com.mediatek.network         PERSISTENT network monitor
+#   com.mitv.overseaservice      PERSISTENT; hosts .netflixService (Netflix key on the remote)
+#   com.mediatek.tvinput         HDMI / tuner input framework
+#   com.mediatek.tv.service      core TV service
+#   com.mi.bluetooth             remote + Bluetooth pairing
+#   com.google.android.tv.remote.service   phone-as-remote pairing
+
+# Xiaomi telemetry
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.xiaomi.tvqs.overseas               # Firebase analytics + DOWNLOAD_WITHOUT_NOTIFICATION
+
+# Ad rows, promos and content providers on the home screen
+com.mitv.tvhome.oemtab                 # holds ACCESS_ADSERVICES_AD_ID/_ATTRIBUTION - the ad row
+com.mitv.tvhome.michannel              # Mi content rows
+com.mitv.tvhome.mitvplus               # Mi TV+ ad-funded channels
+com.mitv.tvhome.atv                    # PatchWall home; not a HOME candidate on this build
+com.xm.webcontent                      # Xiaomi web promo WebView
+com.google.android.partnersetup        # Google RLZ attribution pings
+
+# Retail demo mode
+fusion.android.tv.demo                 # in-store demo loop (.HorizontalActivity/.VerticalActivity)
+
+# Xiaomi nagware and dead weight
+com.xiaomi.mitv.tvmanager              # "TV Manager" cleaner
+com.mitv.toolhouse
+com.xiaomi.mitv.manualhelp             # on-screen user manual
+com.xiaomo.tv.milegal                  # legal notices app
+android.autoinstalls.config.xiaomi.amelie   # silent preload installer config
+
+# Mi Cast / Miracast - Chromecast still works without them
+com.mitv.milinkservice
+com.xiaomi.mitv.smartshare
+com.xiaomi.wfdsinkhelperservice
+
+# Preloaded apps, off by choice - re-enable any you use
+com.graymatrix.did                     # ZEE5
+com.xiaomi.mimusic2                    # Mi Music
+com.google.android.play.games          # Play Games
+
+# ---------------------------------------------------------------------------------------------
+# ONLY AFTER com.gathin.tvhome IS INSTALLED. Do not apply this section on a fresh run, or the
+# Home button has nowhere to go.
+#
+# Disabling the stock launcher is not enough on this firmware:
+# com.google.android.tungsten.setupwraith also answers HOME - .MainActivity at intent-filter
+# priority 4 and .RecoveryActivity at priority 1 - and an ordinary app cannot outrank it, because
+# Android ignores android:priority on HOME filters for non-system apps and `cmd package
+# set-home-activity` reports Success without taking effect (not even across a reboot). Disabling
+# the setupwraith PACKAGE is what frees the slot; `pm disable-user` on its individual components is
+# refused with a SecurityException. See the README troubleshooting section.
+#
+# Trade-off: setupwraith is the first-run setup wizard. Everyday use is unaffected, but re-enable it
+# before a factory reset - tools/restore.sh does that for you while this line is in the list.
+com.google.android.tungsten.setupwraith   # setup wizard; blocks a third-party launcher from Home

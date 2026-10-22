@@ -1,0 +1,66 @@
+# Xiaomi Mi Box S 2nd gen (model MiTV-AFKR0, codename jaws, Amlogic), Google TV / Android 11 (SDK 30),
+# 2 GB RAM. Fingerprints: Xiaomi/jaws/jaws:11/RTT0.211222.001/772:user/release-keys and
+# RTT0.211222.001.737 (validated 2026-10-19 on a Philco 4K TV)
+#
+# Apply:   TV_HOST=<box ip> tools/disable.sh examples/xiaomi-mi-box-s-2nd-gen/debloat.txt
+# Undo:    TV_HOST=<box ip> tools/restore.sh examples/xiaomi-mi-box-s-2nd-gen/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx. HOME claimants on stock: launcherx (priority 2),
+# com.google.android.tungsten.setupwraith/.RecoveryActivity (priority 1), Settings FallbackHome.
+# A streaming box: no HDMI-in or tuner, leave live_tv_package empty in config.xml; the Inputs pill hides itself.
+#
+# Tested: every package below was disabled in batches with screenshots in between, the launcher from
+# launcher/ was installed and owns Home, and Home and Wi-Fi both came back by themselves after a reboot.
+# Validated again 2026-10-19 on 737: launcher com.gathin.tvhome owns Home,
+# cname switched from setupwraith to com.android.tv.settings and survives reboot. Still provisional
+# until few-days soak per CONTRIBUTING.md, but second confirmation.
+#
+# Notes from this box:
+# - The stock adb on macOS connected fine on port 5555 once USB debugging was on; no wireless-debugging
+#   pairing and no tools/tv.py needed.
+# - Disabling launcherx alone makes Home resolve to setupwraith's RecoveryActivity; `cmd package
+#   set-home-activity` reports Success but does not take effect until setupwraith is disabled too.
+# - Right after disabling setupwraith, Wi-Fi dropped for about 20 seconds and the box asked for the Wi-Fi
+#   password again. Once it was re-entered, it stayed saved across a reboot.
+# - After living with it: Wi-Fi, USB playback (with debugging off), Google Home, the phone remote,
+#   Chromecast from a Pixel and Google Assistant all still work. On 737, display is 1920x1080 UI
+#   with Settings > Tela e som > Resolução = 4k 60Hz (video 4K, HDR none on Philco 2016 EDID).
+# - The remote's shortcut buttons (Netflix, YouTube, Prime Video, Xiaomi TV+, Apps) all do nothing once
+#   launcherx is disabled. Prime Video and Xiaomi TV+ are disabled anyway; Netflix, YouTube and Apps were
+#   handled by launcherx, as on the Chromecast with Google TV (see that list for a Key Mapper remap).
+#
+# Kept on purpose: Google Assistant (katniss), Chromecast (mediashell), phone remote (tv.remote.service),
+# YouTube Music, Xiaomi USB media apps (mimusic2, mitv.gallery, mediaexplorer, mitv.videoplayer),
+# Miracast (smartshare, wfdsinkhelperservice), com.xiaomi.tvqs.overseas (quick settings panel),
+# com.xiaomi.android.tvsetup.partnercustomizer (remote shortcut buttons - safe to disable if you don't
+# use the Netflix/YouTube/Prime shortcut keys; tested disabled on 737 with no other effect), mitv.service,
+# com.mi.bluetooth, com.droidlogic* (Amlogic system), com.xiaomi.gtv.settings.
+
+# Telemetry and attribution
+com.miui.tv.analytics                  # Mi analytics
+com.xiaomi.statistic                   # Xiaomi usage stats uploader
+com.google.android.feedback
+com.google.android.partnersetup        # Google RLZ attribution pings
+
+# Ad rows, promos and auto-installs
+com.mitv.tvhome.oemtab                 # Xiaomi ad row
+com.mitv.tvhome.michannel              # Mi content rows
+com.mitv.tvhome.mitvplus               # Mi TV+ ad-funded channels
+com.mitv.tvhome.atv                    # PatchWall
+com.xm.webcontent                      # Xiaomi web promos
+android.autoinstalls.config.xioami.mibox3   # Play auto-install of partner apps (sic, "xioami")
+
+# Xiaomi update service, off by choice; re-enable to check for a firmware update
+com.xiaomi.mitv.updateservice
+
+# Preloaded apps, off by choice
+com.amazon.amazonvideo.livingroom      # Prime Video
+com.google.android.videos              # Google TV / Play Movies
+com.google.android.play.games
+com.android.printspooler
+
+# ONLY AFTER com.gathin.tvhome IS INSTALLED. Disabling launcherx alone hands Home to the setup wizard's
+# RecoveryActivity, so the wizard has to go too. Re-enable it before a factory reset (restore.sh does).
+# On this box Wi-Fi dropped right after disabling it and the password had to be re-entered once.
+com.google.android.tungsten.setupwraith

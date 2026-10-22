@@ -1,0 +1,46 @@
+# TCL 43C645 (reports as "Smart TV Pro"), Android TV 11 (SDK 30), Realtek RTD2851 / R51MT05,
+# firmware V8-R51MT05-LF1V652, Google TV launcher (com.google.android.apps.tv.launcherx).
+# List derived from examples/tcl-65c725 (same Android 11 TCL platform), checked against this unit's packages.
+#
+# Tested 2026-10-19 on a real unit, applied in three batches with a screenshot after each: Ethernet stayed up,
+# Home and the D-pad, the launcher's Sources menu (HDMI via TvInputManager), Netflix, and Home from Netflix all
+# worked, also after a reboot. Private DNS (AdGuard) kept working. Quirks: the stock launcher is
+# com.google.android.apps.tv.launcherx and setupwraith takes HOME as soon as it is disabled; tools/b64push.py
+# failed its md5 check here, plain `adb push` + `pm install -r` worked.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-43c645/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-43c645/debloat.txt
+# Stock launcher: com.google.android.apps.tv.launcherx. HOME fallback com.google.android.tungsten.setupwraith
+# takes over once it is disabled, so it is disabled too (group 1b). Home then resolves to the new launcher.
+# Kept by choice: voice (com.tcl.assistant, katniss), Cast receiver (mediashell), Live TV (com.tcl.tv).
+# Never disable: com.tcl.providers.config com.tcl.initsetup com.tcl.factory.view com.tcl.system.server
+# com.tcl.tcl_bt_rcu_service com.tcl.autopair com.tcl.tvinput com.tcl.tv com.tcl.tvpassthrough com.tcl.settings
+# com.tcl.inputmethod.international com.tcl.sourcemananger com.tcl.keycustomfunctionservice
+
+# 1. Telemetry, promos, content rows
+com.tcl.bi
+com.tcl.dashboard
+com.tcl.esticker
+com.tcl.partnercustomizer
+com.tcl.messagebox
+com.tcl.overseasappshow
+com.google.android.partnersetup
+com.google.android.feedback
+com.google.android.onetimeinitializer
+
+# 1b. Google TV first-run wizard (claims HOME once the stock launcher is off)
+com.google.android.tungsten.setupwraith
+
+# 2. Extras
+com.tcl.useragreement
+com.tcl.android.webview
+com.tcl.guard
+com.tcl.keyhelp
+com.tcl.tv.tclhome_passive
+com.google.android.syncadapters.calendar
+com.google.android.videos
+tv.wuaki.apptv
+
+# 3. Off by choice
+com.tcl.versionUpdateApp                    # firmware updater
+com.tcl.miracast                            # screen mirroring (Cast receiver kept)

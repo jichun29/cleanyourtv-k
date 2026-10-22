@@ -1,0 +1,78 @@
+# TCL UnionTV, Latin America (ro.product.model UnionTV, TCL; persist.tcl.client_type SEM-LA-RT41KB-S1),
+# Realtek RTD284x (RT2841), Android TV 9 (API 28), build PPR2.180905.006.A1 (2020-11-15), 1.4 GB RAM with
+# ro.config.low_ram=true, wired Ethernet. Sold in Brazil.
+# Fingerprint: TCL/UnionTV/UnionTV:9/PPR2.180905.006.A1/builder.20201115.105034:user/release-keys
+# Same platform and build as examples/thomson-32he5800 (THOM-EU-RT2841-S1); this is the TCL-branded
+# Latin America variant. The differences are noted below.
+#
+# Tested: applied 2026-10-19 in batches with screenshots between them; launcher/ installed with the default
+# build-and-install script, Home, Inputs menu (HDMI 1/2, AV, Live TV), HDMI switching, Settings,
+# Netflix/Prime/YouTube launch and the Clock screensaver checked on the device. Not yet lived with for days.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-uniontv-latin-america/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-uniontv-latin-america/debloat.txt
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.tvlauncher (restore.sh / build-and-install defaults work). Other HOME
+# claimants are only the two FallbackHome activities (com.tcl.keycustomfunctionservice,
+# com.android.tv.settings); setupwraith does not claim HOME here. com.google.android.leanbacklauncher is
+# also installed and stays enabled as a fallback.
+# Live TV app: com.tcl.tv (keep it, it owns tuner/HDMI playback; its TVActivity has a leanback entry, so
+# launcher/ needs only live_tv_package com.tcl.tv). Keep com.tcl.tvinput, com.tcl.tvpassthrough (the HDMI
+# TvInputServices) and com.tcl.sourcemananger (source key / input panel). Inputs come from the standard
+# TvInputManager, so the launcher's Inputs menu works with the default config.
+# Standby: Quick start ("Iniciar rapido", STR, sys.tcl.str.switch) suspends to RAM and takes Ethernet down
+# with it, so ADB, Cast and Wake-on-LAN cannot wake the TV; there is no network-standby option on this
+# firmware. TCL's picture/system panel opens with `am start -a com.tcl.settings.action.NETWORKSETTINGS`.
+#
+# Differences from the Thomson list, which keeps these three: com.tcl.partnercustomizer,
+# com.tcl.copydatatotv and com.tcl.common.terminalmanagerplus were disabled here with the remote, HDMI
+# switching, Settings and the launcher all still working. The remote's T key (partnercustomizer's TKey
+# activity) was not tested; re-enable partnercustomizer if your remote has one and it stops working.
+# Kept here but disabled in the Thomson list: the TCL media players (com.tcl.ui_mediaCenter,
+# audioplayer, imageplayer, videoplayer) for USB playback, and com.google.android.partnersetup.
+#
+# Deliberately NOT disabled (system-relevant or unclear): com.tcl.framework.custom, com.tcl.keyhelp,
+# com.tcl.keycustomfunctionservice (remote keys), com.tcl.autopair, com.tcl.tcl_bt_rcu_service (remote
+# pairing), com.tcl.settings, com.tcl.initsetup, com.tcl.appstatecontroller,
+# com.tcl.xian.StartandroidService, com.tcl.ui_mediaCenter (USB playback), com.realtek.netflix.setting
+# (Netflix ESN/config), Chromecast (mediashell), firmware updates (versionUpdateApp, rc.ota).
+
+# Telemetry and feedback
+com.tcl.bi                              # TCL analytics / telemetry service
+com.google.android.feedback
+com.google.android.tv.bugreportsender
+
+# Content rows, promos and auto-installs
+com.google.android.tvrecommendations
+com.google.android.leanbacklauncher.recommendations
+com.tcl.partnercustomizer               # TCL promo rows / T-key content
+android.autoinstalls.config.tcl.device  # Play auto-installs of partner apps
+com.tcl.esticker                        # retail demo stickers
+com.tcl.appmarket2                      # TCL app store (Google Play Store stays)
+com.tcl.tvweishi                        # "cleaner" widget service
+com.tcl.usercenter                      # TCL account sign-in nags
+com.tcl.copydatatotv                    # phone-to-TV copy helper, starts at boot
+
+# Preloaded apps
+com.google.android.videos               # Play Movies & TV
+com.google.android.play.games
+com.google.android.music
+com.android.printspooler
+
+# Off by choice on this unit (voice, and two third-party apps installed on this unit); re-enable if wanted
+com.google.android.katniss              # Google Assistant / voice search
+com.nousguide.android.rbtv              # Red Bull TV
+tv.twitch.android.app
+
+# Second pass, applied the same day. The launcher's Clock screensaver replaces Ambient Mode:
+#   tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.ClockDream'
+com.google.android.backdrop             # Ambient Mode screensaver (Google content)
+com.google.android.tts                  # Google text-to-speech, ~18 MB resident; only accessibility uses it
+com.google.android.marvin.talkback      # screen reader; re-enable if someone needs it
+com.google.android.speech.pumpkin       # offline hotword, unused once katniss is off
+com.android.gallery3d                   # old AOSP gallery; TCL Media Center opens photos
+com.android.wallpaper.livepicker
+com.android.dreams.basic
+com.tcl.common.terminalmanagerplus      # TCL device-management service, starts at boot and watches
+                                        # package installs; remote, HDMI and Settings fine without it

@@ -1,0 +1,59 @@
+# TCL 43S5K, India (device G13, product G13_2K_GB, model "Smart TV"), Google TV 14 (SDK 34),
+# build UKN2.241110.001 AU10, security patch 2025-12-01. MediaTek MT9221 (ro.board.platform mt5867),
+# about 1 GB RAM (954 MB, low_ram=true), 32-bit only (armeabi-v7a).
+# Unlike the G08 TCL Google TVs, Live TV and HDMI are MediaTek's com.mediatek.wwtv.tvcenter, not com.tcl.tv.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/tcl-43s5k/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/tcl-43s5k/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED, not uninstalled. Comment out any line you want to keep.
+#
+# Stock launcher: com.google.android.apps.tv.launcherx. Live TV / HDMI app: com.mediatek.wwtv.tvcenter.
+# Keep: com.mediatek.wwtv.tvcenter, com.mediatek.tvinput, com.mediatek.tv.service, com.tcl.suspension
+# (source panel / Input button), com.tcl.keyhelp (virtual keys), com.tcl.useragreement, com.tcl.factory.view,
+# mediatek.factorymenu.ui, com.mediatek.wwtv.setupwizard, com.google.android.tv.remote.service.
+#
+# com.tcl.ttvs on this firmware is BOTH TCL's analytics (bi.core.BIService, identifier, trackdata) AND
+# TCL's firmware/app updater (versionUpdateApp.core.SystemUpdateService). Disabling it stops TCL
+# firmware updates until it is enabled again, so it is commented out below; uncomment it to trade
+# updates for less tracking.
+#
+# The saved Wi-Fi network was created by com.google.android.tungsten.setupwraith (cname= in dumpsys wifi),
+# so forget and re-join it in Settings before setupwraith is disabled.
+#
+# Applied in four batches on 2026-10-20 with a screenshot after each and lived with for an afternoon so far
+# (shorter than CONTRIBUTING.md asks; I'll report back if anything breaks). Since then: two power cuts and a
+# reboot, Home came back on launcher/ each time; Wi-Fi, the remote's Input key (TCL's source panel), the
+# launcher's Inputs menu (HDMI 1, HDMI 2, Composite, Live TV), YouTube, Netflix and JioHotstar (with AdGuard
+# Private DNS) all fine. launcherx was disabled by launcher/build-and-install.sh after the new Home ran.
+#
+# Known quirks on this firmware:
+# - The remote's gear button sends keycode 83 (KEYCODE_NOTIFICATION, scancode 561), which only launcherx
+#   handled: set settings_key_keycodes to [83] (config.xml or a theme) so it opens Settings again.
+# - With katniss off the mic button does nothing; leave it enabled if you use voice.
+# - Usage statistics restart empty after a power cut (they are written to disk only now and then).
+
+# Batch 1: TCL tracking, ads and auto-installs
+# com.tcl.ttvs                         # TCL analytics AND the firmware updater: kept on so updates arrive (#322)
+com.tcl.messagebox                     # TCL push messages and promos; carries an org.tcl.ttvs receiver
+com.tcl.logkit                         # log capture and upload
+com.tcl.partnercustomizer              # TCL promo rows on the Google TV home
+android.autoinstalls.config.google.gtvpai   # silently installs partner apps
+com.google.android.partnersetup        # partner attribution (RLZ pings)
+
+# Batch 2: preloaded apps and extras not used on this unit
+com.tcl.browser                        # TCL "BrowseHere" browser and web-video portal
+com.google.android.play.games
+com.google.android.feedback
+com.android.tv.feedbackconsent
+com.google.android.katniss             # Google Assistant voice (mic button), about 63 MB in two processes; off by choice
+
+# Batch 3: setup wizard. It claims HOME (RecoveryActivity, priority 1) once launcherx is gone.
+# Disabled while launcherx still owned Home, and only after the Wi-Fi network was forgotten and re-joined
+# in Settings so that it belongs to android.uid.system instead of setupwraith.
+com.google.android.tungsten.setupwraith
+
+# Batch 4: after launcher/ is Home and the screensaver is switched to the launcher's clock:
+#   tools/tv.py 'settings put secure screensaver_components com.gathin.tvhome/.ClockDream'
+# (it was unset, so the default com.google.android.apps.tv.dreamx/.service.Backdrop ran;
+#  undo with 'settings delete secure screensaver_components')
+com.google.android.apps.tv.dreamx      # Google TV Ambient mode screensaver (promos)

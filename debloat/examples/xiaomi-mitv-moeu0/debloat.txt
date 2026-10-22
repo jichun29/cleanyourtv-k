@@ -1,0 +1,69 @@
+# Xiaomi TV S Mini LED 75 2025, MiTV-MOEU0 (codename ladybird), Google TV / Android 14 (SDK 34),
+# firmware UKN1.240806.017.V816.0.25.12.1.ULBMIXM. MediaTek chipset, ro.adb.secure=1.
+# Stock launcher: com.google.android.apps.tv.launcherx. Live TV app: com.mitv.livetv, which the
+# launcher's Inputs menu hands HDMI 1-3 and Live TV to.
+#
+# Apply:   TV_HOST=<tv ip> tools/disable.sh examples/xiaomi-mitv-moeu0/debloat.txt
+# Undo:    TV_HOST=<tv ip> tools/restore.sh examples/xiaomi-mitv-moeu0/debloat.txt com.google.android.apps.tv.launcherx
+# Everything is DISABLED for user 0, not uninstalled. Comment out any line you want to keep.
+#
+# Tested: disabled in batches of 1-7 with a screenshot after each, launcher from launcher/ installed
+# and owning Home, Inputs switches to HDMI (com.mitv.livetv comes up), Prime Video plays. A first-day
+# report, not the few days of living with it that CONTRIBUTING.md asks for.
+#
+# Sideloading works, including apps that claim HOME, so the launcher half is possible.
+# HOME: setupwraith/.RecoveryActivity claims Home next to launcherx, so it is disabled below. On this
+# unit the saved Wi-Fi network belonged to android.uid.system, not setupwraith; check with
+# `dumpsys wifi | grep -o 'cname=[^ ]*'` before disabling it (disable.sh does).
+#
+# Remote buttons the stock launcher answered, which do nothing once it is disabled
+# (build-and-install.sh with INPUT_KEY_SERVICE=1 HOME_KEY_SERVICE=1):
+#   Settings/gear  keycode 176 (KEYCODE_SETTINGS)    settings_key_keycodes: 176
+#   YouTube        keycode 190 (KEYCODE_BUTTON_3)    app_keys: 190:com.google.android.youtube.tv
+#   Apps           keycode 284 (KEYCODE_ALL_APPS)    HomeKeyService
+#   Xiaomi TV+     keycode 192 (KEYCODE_BUTTON_5)    free once mitvplus is off, for app_keys
+# Netflix, Prime Video and Input kept working without changes.
+#
+# DO NOT DISABLE on this model, checked with dumpsys on the unit:
+#   mitv.service                 AccessibilityKeyService, TvServer, global key receiver
+#   com.mitv.overseaservice      Bluetooth remote service and the Netflix key
+#   com.mediatek.tv.agent        power, timers, global hotkeys, TV remote service agent
+#   com.mediatek.extservice      picture quality, CEC, audio, capture
+#   com.mitv.livetv              Live TV and HDMI playback
+#   com.xiaomi.tvqs.overseas.y24 quick settings panel
+#   com.mi.bluetooth             remote pairing
+# Kept by request: Chromecast (mediashell), Google Assistant (katniss), AirPlay and Miracast
+# (com.mediatek.AirplayAPK, com.xiaomi.mitv.smartshare, com.xiaomi.wfdsinkhelperservice), firmware
+# updates (com.mitv.upgrader, com.xiaomi.mitv.updateservice, com.mediatek.tv.systemupdater).
+
+# Telemetry
+com.miui.tv.analytics
+com.xiaomi.statistic
+com.android.tv.feedbackconsent
+com.google.android.feedback
+
+# Content, ads and recommendations
+com.mitv.tvhome.michannel                    # recommendation channels, Firebase
+com.mitv.tvhome.mitvplus                     # Xiaomi TV+ promo banners
+com.mitv.tvhome.oemtab
+com.mitv.tvhome.atv                          # banner tiles
+com.xm.webcontent
+com.xiaomi.mitv.manualhelp
+android.autoinstalls.config.google.gtvpai    # Play auto-installs
+
+# Cleaner with Firebase analytics
+com.xiaomi.mitv.tvmanager
+
+# Preloaded apps
+com.google.android.youtube.tvmusic
+com.google.android.play.games
+com.xiaomi.mimusic2
+com.mitv.gallery
+com.mitv.videoplayer
+com.xiaomi.mitv.mediaexplorer
+
+# Setup wizard; takes Home once launcherx is off
+com.google.android.tungsten.setupwraith
+
+# Stock launcher; build-and-install.sh disables it once the new launcher owns Home
+# com.google.android.apps.tv.launcherx

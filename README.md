@@ -47,14 +47,41 @@
 
 ## 下载
 
-见 [Releases](../../releases) 页面，两个对外版本（同一版本号，按设备选）：
+见 [Releases](../../releases) 页面，**两个版本**（按设备选，覆盖 Android 4.4 到最新电视）：
 
-| 版本 | 说明 |
-|---|---|
-| `CleanYourTV-Launcher-universal.apk` | **通用版**：默认 Dock（Netflix/YouTube 等），适合绝大多数 Android TV / Google TV（Android 8.0+ / minSdk 26） |
-| `CleanYourTV-Launcher-N1.apk` | **N1 定制版**：斐讯 N1 盒子刷 YYF/当贝等 Android 7.1 固件专用（minSdk 25，开启 desugar + 减弱动画） |
+| 版本 | 支持系统 | 说明 |
+|---|---|---|
+| `CleanYourTV-Launcher-universal.apk` | **Android 5.0+**（minSdk 21） | **通用版**：功能完整，适合绝大多数电视/盒子（小米、TCL、海信、索尼、N1、Shield…） |
+| `CleanYourTV-Launcher-lite44.apk` | **Android 4.4+**（minSdk 19） | **4.4 精简版**：给老盒子的裁剪构建，砍掉航拍视频壁纸 / 必应每日壁纸 / 时钟屏保 / HDMI 输入源菜单（4.4 无此框架），核心功能全保留 |
 
-> 两个版本功能完全一致，只是 Android 系统版本下限不同。大多数人下**通用版**就行；只有 N1 这种老固件装不上通用版时才用 N1 版。Dock 内容、隐藏 App、列数全都可以在 `config.xml` 或电视上的 Launcher 设置页里改。
+> 两个版本签名一致，可互相覆盖安装不丢设置。Android 5.0 及以上**一律用通用版**；4.4 精简版只给跑不动完整版的老盒子。
+>
+> 通用版默认 Dock：Netflix / Prime / YouTube / Hotstar（缺失自动跳过，装完在电视上用菜单键自己排）；小米电视默认隐藏设置/电视管家/无线投屏/小爱同学 4 个系统组件。**自带应用库**：桌面最后一行「应用库」按钮可把所有已装 App 一键添加/移除桌面，新装 7 天内的 App 带绿点提示。
+
+## 📢 电视去广告库（174 机型）+ AI 一键部署指令词
+
+仓库里自带 [`debloat/`](debloat/) 目录：**174 个电视/盒子/投影机型**的去广告清单（小米 26 台、TCL 43 台、海信 8 台、索尼 6 台、创维/长虹/海尔/康佳/一加/极米/Shield/Fire TV 等 90+ 台），每条注明这个包是干什么的、停用后失去什么。**只停用、不卸载，随时一键还原。**详见 [debloat/README.md](debloat/README.md) 和品牌索引 [debloat/brands.md](debloat/brands.md)。
+
+### 给 AI 机器人的完整指令词（复制即用）
+
+把整个仓库交给 AI，粘贴下面这段话，它就能帮你完成「装桌面 + 去广告」全流程：
+
+```
+请克隆 https://github.com/jichun29/cleanyourtv-k 仓库并阅读 README.md 与 debloat/README.md。
+我的电视型号是【填型号，如「小米 Mi TV 4A」】，电视 IP 是【填 IP】。
+请按顺序完成：
+1. 根据我的电视系统版本选择安装包：Android 5.0 及以上装通用版
+   （launcher 编译或 Releases 里的 CleanYourTV-Launcher-universal.apk），
+   Android 4.4 老盒子装 CleanYourTV-Launcher-lite44.apk。
+   用 adb install -r 安装，并用 cmd package set-home-activity 设为默认桌面。
+2. 在 debloat/examples/ 里找到与我机型最匹配的去广告清单
+   （没有精确匹配时选同品牌、同芯片平台、Android 版本最接近的），
+   逐条向我解释每个包的作用和停用影响，经我确认后用
+   debloat/tools/disable.sh 执行停用（只停用、绝不卸载）。
+3. 停用后逐项验证（pm list packages -d），遇到 setupwraith 等与
+   开机向导/Wi-Fi 相关的包必须先警告我再决定。
+4. 最后提示我重启电视确认效果，并告诉我如何用 tools/restore.sh 还原。
+```
 
 ## 编译
 
@@ -111,13 +138,13 @@ AndroidX RecyclerView and nothing heavier. Built for sets with 1 GB of RAM: no b
 network, no background services. It needs JDK 17 and Android SDK platform 34 to build; on macOS,
 `brew install openjdk@17 android-commandlinetools` and `sdkmanager "platforms;android-34" "build-tools;34.0.0"`. On Linux
 the install script finds `~/Android/Sdk` and the `java` on your PATH.
-The **TV** needs Android 8.0 (API 26) or newer: `minSdk` is a compile-time floor in
+The **TV** needs Android 5.0 (API 21) or newer (Android 4.4 via the `-PliteBuild=true` lite build): `minSdk` is a compile-time floor in
 [`launcher/app/build.gradle`](launcher/app/build.gradle), and the install script asks the TV for
 `ro.build.version.sdk` before it builds, so an older set is told both numbers instead of failing at
 `pm install` (see [Troubleshooting](docs/TROUBLESHOOTING.md) for what is left on such a set).
 
 - **Configure** in [`config.xml`](launcher/app/src/main/res/values/config.xml): dock order, hidden apps, the Live TV package, columns (tiles shrink from 5 up), rows under the dock, an optional VPN app for the network pill, and `reduced_motion` for TVs whose GPU cannot keep up.
-- **App library (optional):** enable `app_library` in config.xml or a theme to browse installed apps and add or remove Home shortcuts with the remote. See [the app library guide](docs/app-library.md).
+- **App library:** on by default — a glass pill after the last Home row lists every installed app (missing-from-Home first, freshly installed apps lead with a green dot); OK adds/removes the Home shortcut, long-press gives Open / Add / Remove / App info. Disable with `app_library` in config.xml. See [the app library guide](docs/app-library.md).
 - **On-TV launcher settings:** click Settings for the TV's system settings, or hold OK on Settings and choose Launcher settings to set 4, 5, 6 or 7 apps per row, turn animations on or off, and opt into advanced effects. The advanced option adds tile lift, icon zoom and smooth ambient-colour transitions; it may use more memory. Use Follow theme to clear on-TV choices. Pushing or resetting a theme also clears them.
 - **Change the default home:** Launcher settings and the optional Default-home tile (`show_home_settings_shortcut`) open Android's home picker. Choose the original launcher to stop using CleanYourTV as Home, or CleanYourTV to return. The original launcher must be enabled. If the install script disabled it, use the restore script below first. Some TVs provide no home picker.
 - **Themes** set the same keys plus a background colour and a wallpaper from a `config.json` pushed to the TV, no rebuild. Four ship in [`themes/`](themes/), documented there.
