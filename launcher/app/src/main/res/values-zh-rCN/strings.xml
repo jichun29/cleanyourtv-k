@@ -8,12 +8,12 @@
     <string name="home_settings_help">选择原始桌面即可关闭简洁桌面的默认桌面状态；需要切回时选择简洁桌面。原始桌面必须仍处于启用状态；若安装脚本已停用它，请先用恢复脚本启用。电视还须提供系统桌面选择页。</string>
     <!-- 老大 2026-10-21 补：LauncherSettingsActivity 缺失的中文翻译 -->
     <string name="rows_below_dock_label">应用栏下方保留行数</string>
+    <string name="wallpaper_settings">壁纸设置</string>
     <string name="wallpaper_label">壁纸</string>
     <string name="wallpaper_none">无</string>
     <string name="wallpaper_theme_default">主题默认</string>
     <string name="wallpaper_state">壁纸：%1$s</string>
     <string name="wallpaper_applied">壁纸已更换</string>
-    <!-- 老大 2026-10-21 补：模块卡片 / 快速设置 / 航拍壁纸 / F1 / VPN 的缺失翻译 -->
     <string name="card_app_name">应用：%1$s</string>
     <string name="card_not_saved">选择未能保存</string>
     <string name="card_prompt_body">%1$s 可以在主屏显示一张卡片。保持隐藏则维持原应用磁贴不变。</string>
@@ -44,7 +44,7 @@
     <string name="vpn_off">VPN 已断开</string>
     <string name="menu_sleep">休眠</string>
     <string name="sleep_unavailable">休眠需要开启 CleanYourTV 休眠服务：设置 > 无障碍</string>
-    <string name="launcher_settings">简洁桌面设置</string>
+    <string name="launcher_settings">桌面设置</string>
     <string name="columns_label">每行应用数量</string>
     <string name="animations_state">动态效果：%1$s</string>
     <string name="advanced_effects">高级动态效果</string>
@@ -53,7 +53,7 @@
     <string name="reduced_motion_state">减弱动画：%1$s</string>
     <string name="follow_theme">跟随主题（重置电视端设置）</string>
     <string name="follow_theme_hint">恢复当前主题或内置的布局与动效设置。推送或重置主题也会清除电视端的这些设置。</string>
-    <string name="tv_settings">电视系统设置</string>
+    <string name="tv_settings">系统设置</string>
     <string name="on">开</string>
     <string name="off">关</string>
     <string name="enable">开启</string>

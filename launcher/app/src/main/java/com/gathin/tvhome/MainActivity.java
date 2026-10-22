@@ -158,8 +158,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private String greetingName = "";
     /** Optional time-of-day backdrop (config.xml, sky_intensity); 0 keeps it hidden. */
     private SkyView sky;
-    /** Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植），null = 未启用或未下载视频。 */
-    private AerialBackdrop aerial;
     private String vpnApp;
     private SpringAnimation springX, springY;
     private float glassTargetX, glassTargetY;
@@ -304,15 +302,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             // stays visible, it sits under the opaque picture and costs nothing.
             ambient.setVisibility(visible ? View.GONE : View.VISIBLE);
         });
-        // Apple Aerial 航拍视频壁纸（apple-tv-launcher 移植）：在 WallpaperController 之后、
-        // 其它 UI 元素之前插入。用户已在壁纸面板里下载并选择过航拍视频时才生效。
-        // 精简版不挂航拍视频壁纸（SurfaceView + MediaPlayer 常驻对老盒子太重）。
-        aerial = BuildConfig.LITE ? null : AerialBackdrop.attach(this, root, root.indexOfChild(sky),
-                AerialBackdrop.chosen(this, getString(R.string.aerial_backdrop)), cfg.backgroundColor);
-        if (aerial != null) {
-            // 航拍视频有自己的暗角和遮罩；ambient 光晕会盖住视频，隐藏
-            ambient.setVisibility(View.GONE);
-        }
         heroName = findViewById(R.id.heroName);
         hero = findViewById(R.id.hero);
         // The hero is now a group (name, and the cinematic lines): without this every fade of the default
@@ -653,7 +642,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         updateInputsButton();
         if (showStats) startStats();
         sky.update();
-        if (aerial != null) aerial.resume();
         wallpaperPlayer.start();
         handler.postDelayed(minuteTick, MINUTE_MS);
         if (festive && diya != null) {
@@ -767,7 +755,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         super.onPause();
         root.removeCallbacks(showIdleClock);
         endReorder();   // Home or another app while reordering keeps the order so far
-        if (aerial != null) aerial.pause();   // 释放视频解码器给其它 App
         wallpaperPlayer.stop();
         stopAmbientAnimation();
         hero.animate().cancel();
@@ -1248,8 +1235,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             revealRect.set(0, -(int) pad * 2, item.getWidth(), item.getHeight() + (int) pad);
             grid.requestChildRectangleOnScreen(item, revealRect, reducedMotion);
         }
-        // 航拍视频：焦点进 grid（非 Dock）时调暗背景，图标更突出（tvOS 行为）
-        if (aerial != null) aerial.setGridFocused(dockRow && position >= COLUMNS);
     }
 
     /** Refits the glass to the focused holder once the grid layout and tile dimensions settle. */
@@ -2478,7 +2463,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     }
 
     /**
-     * K 定制 2026-10-21：单击设置按钮弹的「桌面设置 / 系统设置」二选一玻璃弹窗。
+     * K 定制 2026-10-21：单击设置按钮弹「壁纸设置 / 桌面设置 / 系统设置 / 关于」玻璃弹窗。
+     * 2026-10-22 K 追加：壁纸设置拎到最上面，不用再进桌面设置里找。
      * 复用 showSettingsMenu 的玻璃 popup + addSettingsMenuRow 按键处理。
      *  wallpaper 等 launcher 设置全收进 LauncherSettingsActivity，单击不再直达系统设置。
      */
@@ -2487,6 +2473,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
         PopupWindow popup = glassPopup(panel, (int) (200 * density));
+        addSettingsMenuRow(rows, popup, R.string.wallpaper_settings, () -> wallpapers.showPicker());
         addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         addSettingsMenuRow(rows, popup, R.string.tv_settings,

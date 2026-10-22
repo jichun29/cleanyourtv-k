@@ -280,79 +280,6 @@ final class WallpaperController {
 
     private String name(int n) { return n < 0 ? "默认壁纸" : ZH[n]; }
 
-    /** Apple Aerial 航拍壁纸下载商店（遥控器操作）。从壁纸面板进入，picker 已关闭。 */
-    private void showAerialStore() {
-        if (BuildConfig.LITE) return;   // 精简版没有航拍入口
-        Dialog store = new Dialog(activity);
-        FrameLayout content = new FrameLayout(activity);
-        TextView title = label("航拍视频壁纸", 24);
-        place(content, title, 400, 34, 48, 30);
-        TextView status = label(activity.getString(R.string.aerials_loading), 14);
-        place(content, status, 800, 26, 48, 76);
-        android.widget.LinearLayout rows = new android.widget.LinearLayout(activity);
-        rows.setOrientation(android.widget.LinearLayout.VERTICAL);
-        android.widget.ScrollView scroll = new android.widget.ScrollView(activity);
-        scroll.addView(rows, new FrameLayout.LayoutParams(-1, -2));
-        place(content, scroll, 700, 340, 48, 116);
-        store.setContentView(content);
-        Window w = store.getWindow();
-        w.setBackgroundDrawable(new ColorDrawable(0xE010141C));
-        w.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        w.setDimAmount(.3f);
-        store.show();
-        w.setLayout(820, -2);
-
-        AerialDownloads.loadCatalog(activity, list -> {
-            if (!store.isShowing()) return;
-            if (list == null) {
-                status.setText(activity.getString(R.string.aerials_offline));
-                return;
-            }
-            status.setText("上下选择 · 确定下载/删除 · 返回关闭");
-            for (AerialDownloads.Aerial a : list) {
-                TextView row = new TextView(activity);
-                row.setTextSize(15);
-                row.setTextColor(Color.WHITE);
-                row.setPadding(24, 18, 24, 18);
-                row.setFocusable(true);
-                row.setBackground(border(false));
-                android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(-1, -2);
-                lp.bottomMargin = 8;
-                rows.addView(row, lp);
-                updateAerialRow(row, a);
-                row.setOnFocusChangeListener((v, f) -> row.setBackground(border(f)));
-                row.setOnClickListener(v -> {
-                    if (AerialDownloads.onTv(activity, a)) {
-                        // 已在电视：设为当前航拍壁纸并关闭
-                        AerialBackdrop.choose(activity, a.file);
-                        Toast.makeText(activity, a.title + " 已设为壁纸", Toast.LENGTH_SHORT).show();
-                        store.dismiss();
-                        // 重启桌面生效
-                        activity.recreate();
-                    } else if (AerialDownloads.downloading == null) {
-                        AerialDownloads.download(activity, a, (pct, msg) -> {
-                            if (!store.isShowing()) return;
-                            if (pct == 101) {
-                                Toast.makeText(activity, activity.getString(R.string.aerials_done, a.title), Toast.LENGTH_SHORT).show();
-                                updateAerialRow(row, a);
-                            } else if (pct >= 0 && pct <= 100) {
-                                row.setText(a.title + "  " + activity.getString(R.string.aerials_percent, pct));
-                            } else if (msg != null) {
-                                row.setText(a.title + "  " + msg);
-                            }
-                        });
-                    }
-                });
-            }
-            if (rows.getChildCount() > 0) rows.getChildAt(0).requestFocus();
-        });
-    }
-
-    private void updateAerialRow(TextView row, AerialDownloads.Aerial a) {
-        boolean onTv = AerialDownloads.onTv(activity, a);
-        row.setText(a.title + (onTv ? "  ✓ " + activity.getString(R.string.aerials_on_tv) : ""));
-    }
-
     // ---- picker (remote-friendly dialog) ---------------------------------------------------
 
     private TextView label(String value, float sizeSp) {
@@ -401,7 +328,7 @@ final class WallpaperController {
             }
         }
 
-        TextView title = label("壁纸设置", 26);
+        TextView title = label(activity.getString(R.string.wallpaper_settings), 26);
         place(content, title, 300, 38, 48, 28);
 
         TextView mode = label(
@@ -410,20 +337,20 @@ final class WallpaperController {
                         : rotating ? "当前：自动轮播【每 5 分钟】" : "当前：固定壁纸", 13);
         place(content, mode, 600, 25, 48, 73);
 
-        TextView auto = label(rotating ? "壁纸轮播：开" : "壁纸轮播：关", 14);
+        TextView auto = label(rotating ? "壁纸轮播：开" : "壁纸轮播：关", 15);
         auto.setGravity(Gravity.CENTER);
         auto.setFocusable(true);
         auto.setBackground(border(false));
-        place(content, auto, 144, 40, 620, 42);
+        place(content, auto, 150, 40, 600, 42);
 
         // 必应每日壁纸开关（tvhome-zh 移植）：打开后每天自动换必应今日图
         // 精简版（Android 4.4/5.0 老盒子）不显示必应每日壁纸：每天联网下载 + 解码一张图，负担不值当。
         final boolean hasBing = !BuildConfig.LITE;
-        TextView bingBtn = label(bingMode || bing.enabled() ? "必应每日壁纸：开" : "必应每日壁纸：关", 14);
+        TextView bingBtn = label(bingMode || bing.enabled() ? "必应每日壁纸：开" : "必应每日壁纸：关", 15);
         bingBtn.setGravity(Gravity.CENTER);
         bingBtn.setFocusable(hasBing);
         bingBtn.setBackground(border(false));
-        if (hasBing) place(content, bingBtn, 190, 40, 780, 42);
+        if (hasBing) place(content, bingBtn, 170, 40, 766, 42);
         else bingBtn.setVisibility(View.GONE);
 
         TextView status = label("", 14);
@@ -439,15 +366,17 @@ final class WallpaperController {
             float d = activity.getResources().getDisplayMetrics().density;
             card.setPadding(Math.round(5 * d), Math.round(5 * d), Math.round(5 * d), Math.round(5 * d));
             card.setBackground(border(false));
-            card.setContentDescription(name(choice));
             place(content, card, 204, 162, 48 + n * 220, 318);
+            card.setContentDescription(name(choice));
 
             ImageView thumb = image();
             card.addView(thumb, new FrameLayout.LayoutParams(-1, Math.round(112 * d)));
             if (choice < 0) thumb.setImageBitmap(defaultThumbnail());
             else decoder.execute(() -> {
                 Bitmap bitmap = thumbnail(choice);
-                main.post(() -> { if (picker != null && picker.isShowing()) thumb.setImageBitmap(bitmap); });
+                main.post(() -> {
+                    if (picker != null && picker.isShowing()) thumb.setImageBitmap(bitmap);
+                });
             });
 
             boolean checked = choice < 0 ? useDefault : !useDefault && !rotating && index == choice;
@@ -522,45 +451,6 @@ final class WallpaperController {
         bingBtn.setOnKeyListener((v, key, event) -> {
             if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
                 if (event.getAction() == KeyEvent.ACTION_DOWN) auto.requestFocus();
-                return true;
-            }
-            return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
-                    || key == KeyEvent.KEYCODE_DPAD_RIGHT;
-        });
-
-        // Apple Aerial 航拍视频壁纸下载/管理入口
-        // 精简版不显示航拍视频壁纸：几十 MB 解码 + SurfaceView 常驻，老盒子扛不住。
-        final boolean hasAerial = !BuildConfig.LITE;
-        TextView aerialBtn = label(activity.getString(R.string.aerials_download), 14);
-        aerialBtn.setGravity(Gravity.CENTER);
-        aerialBtn.setFocusable(hasAerial);
-        aerialBtn.setBackground(border(false));
-        if (hasAerial) place(content, aerialBtn, 190, 40, 986, 42);
-        else aerialBtn.setVisibility(View.GONE);
-        aerialBtn.setOnFocusChangeListener((v, focus) -> {
-            aerialBtn.setBackground(border(focus));
-            if (focus) status.setText("下载 Apple 航拍视频壁纸（首次需联网，几十 MB）");
-        });
-        aerialBtn.setOnClickListener(v -> {
-            picker.dismiss();
-            showAerialStore();
-        });
-        aerialBtn.setOnKeyListener((v, key, event) -> {
-            if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && hasBing) bingBtn.requestFocus();
-                return true;
-            }
-            return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
-                    || key == KeyEvent.KEYCODE_DPAD_RIGHT;
-        });
-
-        bingBtn.setOnKeyListener((v, key, event) -> {
-            if (key == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN) auto.requestFocus();
-                return true;
-            }
-            if (key == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (event.getAction() == KeyEvent.ACTION_DOWN && hasAerial) aerialBtn.requestFocus();
                 return true;
             }
             return key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN;

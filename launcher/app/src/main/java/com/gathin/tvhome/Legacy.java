@@ -21,7 +21,7 @@ import android.view.ViewPropertyAnimator;
  * - 没有输入源菜单（TvInputManager 是 API 21 才有的整套框架）
  * - 网络状态条不显示（只保留 Wi-Fi 名称为空的状态）
  * - 图标着色改为给 Drawable 套一层 ColorFilter
- * 高负载功能（航拍视频壁纸、必应每日壁纸、时钟屏保、宇称卡片）在 4.4 版里整体不编进去。
+ * 高负载功能（必应每日壁纸、时钟屏保、宇称卡片）在 4.4 版里整体不编进去。
  */
 final class Legacy {
     static final boolean HAS_MATERIAL = android.os.Build.VERSION.SDK_INT >= 21;
