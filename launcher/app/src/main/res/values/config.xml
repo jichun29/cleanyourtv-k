@@ -123,9 +123,8 @@
          Inputs keeps its label. -->
     <bool name="icon_only_buttons">false</bool>
     <!-- The app library as a round button in the top bar, beside Settings (app_library must be on too). -->
-    <!-- K 2026-10-22：应用库按钮不占顶栏位置（应用库在控制中心里，遥控器上也可以按「应用库」键）。
-         顶栏只留 信号源 / 网络 / 设置 三个。 -->
-    <bool name="library_button">false</bool>
+    <!-- K 2026-10-22：应用库按钮也放回顶栏。顶栏 = 信号源 / 网络 / 应用库 / 设置 四个。 -->
+    <bool name="library_button">true</bool>
     <!-- With icon_only_buttons: keep the network name on the Wi-Fi pill up to this width in dp, cut with an ellipsis.
          0 leaves the Wi-Fi pill as an icon. -->
     <integer name="wifi_label_width">0</integer>

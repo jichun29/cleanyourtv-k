@@ -535,11 +535,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 focusTile(lastFocused % COLUMNS);
                 return true;
             }
-            int firstButton = btnInputs.getVisibility() == View.VISIBLE ? R.id.btnInputs : R.id.btnWifi;
-            int leftButton = rtlMenuBar ? R.id.btnSettings : firstButton;
-            int rightButton = rtlMenuBar ? firstButton : R.id.btnSettings;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return v.getId() == leftButton;
-            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && v.getId() == rightButton;
+            // 顶栏现在可能是 3~5 个按钮（信号源/网络/应用库/重排/设置），必须按「实际可见顺序」
+            // 算左右边界，不能写死 btnSettings——否则夹在中间的九宫格/重排按钮按右键没反应。
+            java.util.List<Integer> order = new java.util.ArrayList<>();
+            for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnLibraryTop,
+                    R.id.btnReorder, R.id.btnSettings}) {
+                View b = findViewById(id);
+                if (b != null && b.getVisibility() == View.VISIBLE) order.add(id);
+            }
+            if (order.isEmpty()) return false;
+            int idx = order.indexOf(v.getId());
+            if (idx < 0) return false;
+            boolean rtl = rtlMenuBar;
+            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) return idx == (rtl ? order.size() - 1 : 0);
+            return keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && idx == (rtl ? 0 : order.size() - 1);
         };
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
