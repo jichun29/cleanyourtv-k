@@ -123,7 +123,9 @@
          Inputs keeps its label. -->
     <bool name="icon_only_buttons">false</bool>
     <!-- The app library as a round button in the top bar, beside Settings (app_library must be on too). -->
-    <bool name="library_button">true</bool>
+    <!-- K 2026-10-22：应用库按钮不占顶栏位置（应用库在控制中心里，遥控器上也可以按「应用库」键）。
+         顶栏只留 信号源 / 网络 / 设置 三个。 -->
+    <bool name="library_button">false</bool>
     <!-- With icon_only_buttons: keep the network name on the Wi-Fi pill up to this width in dp, cut with an ellipsis.
          0 leaves the Wi-Fi pill as an icon. -->
     <integer name="wifi_label_width">0</integer>
@@ -131,9 +133,9 @@
     <!-- The Wi-Fi/Ethernet pill in the top bar. false hides it (on Android 14 with Location off it can
          only say "Wi-Fi", not the network name). Can also be set with "show_network_pill" in a theme. -->
     <bool name="show_network_pill">true</bool>
-    <!-- K 2026-10-22：右上角顶栏（输入源/网络/重排/应用库/设置）。默认 false——这些功能全部
-         已经在控制中心（遥控器「菜单键」）里，桌面保持干净。主题也可用 "top_bar" 打开。 -->
-    <bool name="top_bar">false</bool>
+    <!-- K 2026-10-22：右上角顶栏默认显示，但只留「信号源 / 网络 / 设置」三个按钮。
+         控制中心（菜单键）是快捷方式，不是唯一入口。重排/应用库按钮已隐藏（它们在控制中心里）。 -->
+    <bool name="top_bar">true</bool>
     <!-- Names under every tile, not only the focused one: unfocused names stay dimmed, the focused one is full white.
          With dock_row the band grows down to hold the dock's names too. -->
     <bool name="always_show_names">false</bool>

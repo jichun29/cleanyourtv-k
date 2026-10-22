@@ -326,9 +326,11 @@
                     android:drawableStart="@drawable/ic_wifi"
                     android:nextFocusDown="@+id/grid" />
 
+                <!-- K 2026-10-22：重排按钮从顶栏撤下（控制中心里有「重排图标」），顶栏只留三个常用项 -->
                 <TextView
                     android:id="@+id/btnReorder"
                     style="@style/TopButtonIcon"
+                    android:visibility="gone"
                     android:contentDescription="@string/reorder"
                     android:drawableStart="@drawable/ic_swap_vert"
                     android:nextFocusDown="@+id/grid" />
