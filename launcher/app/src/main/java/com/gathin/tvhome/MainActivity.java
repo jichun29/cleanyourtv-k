@@ -925,81 +925,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         return false;
     }
 
-    // ---- 长按 OK = 应用菜单（K 2026-10-22）------------------------------------------------------
+    // ---- 菜单键 = 磁贴菜单（K 2026-10-22）------------------------------------------------------
+    // 长按 OK 已取消：系统长按判定不稳定，有时会直接进重排模式。
+    // 现在菜单键（MENU）弹磁贴菜单，OK 单击直接打开 App。
 
-    /** 长按 OK 的阈值；遥控器长按一般会在 500ms 后开始连发 repeat，这里自己计时更稳。 */
-    private static final long LONG_OK_MS = 550;
-    /** OK 已按下、还没决定是「单击打开」还是「长按弹菜单」。 */
-    private boolean okHeld;
-    private int okHeldPos = -1;
-    private String okHeldKey;
-    private final Runnable okLongPress = new Runnable() {
-        @Override
-        public void run() {
-            if (!okHeld) return;
-            okHeld = false;              // 已消费成长按，抬手时不能再打开 App
-            okLongPressFired = true;
-            if (adapter != null && okHeldPos >= 0) {
-                AppAdapter.Entry e = adapter.getEntryAt(okHeldPos);
-                if (e != null && e.kind == AppAdapter.Entry.APP) adapter.showTileActions(e);
-            }
-        }
-    };
-    private boolean okLongPressFired;
-
-    /**
-     * 磁贴上的 OK：按下时先扣住，550ms 内抬手 = 单击（照旧打开 App），超时 = 弹应用菜单。
-     * 不在磁贴上（顶部按钮等）时完全不插手，交给系统默认处理，保证按钮手感不变。
-     */
-    private boolean handleOkPress(KeyEvent event) {
-        if (reordering || dockEditing) return false;   // 重排/编辑 Dock 有自己的 OK 语义
-        if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (event.getRepeatCount() > 0) {
-                // 系统自己判定了长按；此时已经被计时器接管则不重复弹窗
-                if (okHeld && !okLongPressFired) {
-                    handler.removeCallbacks(okLongPress);
-                    okLongPress.run();
-                }
-                return okHeld || okLongPressFired;
-            }
-            // 已经在重排模式里：OK 是「放下」，不是「弹菜单」
-            if (reordering) return false;
-            int pos = focusedTilePosition();
-            if (pos < 0 || adapter == null) return false;
-            AppAdapter.Entry e = adapter.getEntryAt(pos);
-            if (e == null || e.kind != AppAdapter.Entry.APP) return false;
-            okHeld = true;
-            okLongPressFired = false;
-            okHeldPos = pos;
-            handler.postDelayed(okLongPress, LONG_OK_MS);
-            return true;
-        }
-        if (event.getAction() == KeyEvent.ACTION_UP) {
-            if (!okHeld) {
-                // 已经被长按消费掉：抬手只是收尾，绝不能落成「打开 App」
-                if (okLongPressFired) { okLongPressFired = false; return true; }
-                return false;
-            }
-            okHeld = false;
-            handler.removeCallbacks(okLongPress);
-            int pos = okHeldPos;
-            okHeldPos = -1;
-            if (pos >= 0 && adapter != null) {
-                AppAdapter.Entry e = adapter.getEntryAt(pos);
-                if (e != null && e.kind == AppAdapter.Entry.APP) {
-                    adapter.launchEntry(e);
-                    return true;
-                }
-            }
-            return false;
-        }
-        return okHeld;
-    }
-
-    /** 菜单键：打开控制中心（信号源/网络/显示/音量/亮度/桌面设置）。 */
-    private void openControlCenter() {
-        startActivity(new Intent(this, QuickSettingsActivity.class)
-                .putExtra(QuickSettingsActivity.EXTRA_SOURCE, QuickSettingsActivity.SOURCE_MENU_KEY));
+    /** 菜单键：弹当前磁贴的操作菜单（打开/置顶/移动/卸载/应用信息/隐藏）。 */
+    private void openTileMenu() {
+        if (adapter == null) return;
+        int pos = focusedTilePosition();
+        if (pos < 0) return;
+        AppAdapter.Entry e = adapter.getEntryAt(pos);
+        if (e == null || e.kind != AppAdapter.Entry.APP) return;
+        adapter.showTileActions(e);
     }
 
     // ---- reorder ---------------------------------------------------------------------------------
@@ -1017,14 +954,24 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (handleSettingsKey(event)) return true;
-        // 长按 OK（K 2026-10-22）：焦点在 App 磁贴上时弹「打开/移动/隐藏/应用信息/卸载」玻璃弹窗。
-        // 单按 OK 仍然直接打开 App，所以要在按下时把 OK 扣住、到长按阈值或抬手时才放行。
+        // OK 单击直接打开 App，不再做长按判定（K 2026-10-22：长按会误触发重排，取消）。
+        // 菜单键接管了原来的长按 OK 功能（弹磁贴菜单）。
         if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-            if (handleOkPress(event)) return true;
+            if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                int pos = focusedTilePosition();
+                if (pos >= 0 && adapter != null) {
+                    AppAdapter.Entry e = adapter.getEntryAt(pos);
+                    if (e != null && e.kind == AppAdapter.Entry.APP) {
+                        adapter.launchEntry(e);
+                        return true;
+                    }
+                }
+            }
+            return super.dispatchKeyEvent(event);
         }
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
-            // 菜单键（K 2026-10-22）= 控制中心：信号源/网络/显示/音量/亮度/桌面设置。
-            openControlCenter();
+            // 菜单键（K 2026-10-22）：弹当前磁贴的操作菜单，不再开控制中心。
+            openTileMenu();
             return true;
         }
         if (!reordering) return super.dispatchKeyEvent(event);
