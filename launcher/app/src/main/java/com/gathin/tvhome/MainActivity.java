@@ -665,6 +665,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             registerReceiver(timeReceiver, timeFilter);
         }
         updateClockVisibility();
+        // K 2026-10-22：自动检查更新（默认关闭；开了才每 3 小时查一次）。
+        // 结果如果有新版，弹一次提示；用户点「跳过此版」后同一版不再打扰。
+        UpdateChecker.checkIfDue(this, r -> {
+            if (!r.hasUpdate || r.error != null) return;
+            android.widget.Toast.makeText(this,
+                    getString(R.string.update_available_toast, r.latestTag),
+                    android.widget.Toast.LENGTH_LONG).show();
+        });
     }
 
     @Override
@@ -2709,6 +2717,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         addSettingsMenuRow(rows, popup, R.string.wallpaper_settings, () -> wallpapers.showPicker());
         addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
+        addSettingsMenuRow(rows, popup, R.string.menu_check_update,
+                () -> startActivity(new Intent(this, UpdateActivity.class)));
         addSettingsMenuRow(rows, popup, R.string.tv_settings,
                 () -> open(systemIntent(Settings.ACTION_SETTINGS)));
         addSettingsMenuRow(rows, popup, R.string.menu_about, this::showAbout);
