@@ -47,6 +47,59 @@
         <item name="android:focusable">true</item>
         <item name="android:clickable">true</item>
     </style>
+
+    <!-- ============ 桌面设置页 v2（K 2026-10-22 重做）============ -->
+    <!-- 分组标题：每组一行「桌面布局 / 动效 / 软件更新 / 系统」 -->
+    <style name="SettingsGroupTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#99FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:letterSpacing">0.08</item>
+    </style>
+
+    <!-- 标准设置行：左标签右控件（LinearLayout 包 TextView + 控件） -->
+    <style name="SettingsRowV2">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:background">@drawable/settings_row_bg</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- 行内左侧的设置名（权重撑满，把右侧控件推到右边） -->
+    <style name="SettingsRowLabel">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <!-- 行内右侧的当前值：比标签暗一档，让人知道这是「值」不是「名」 -->
+    <style name="SettingsRowValue">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">#B3FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:layout_marginEnd">12dp</item>
+    </style>
+
+    <!-- 分段控件（每行应用数量的 4/5/6/7）：固定宽度紧凑排列 -->
+    <style name="SettingsSegment">
+        <item name="android:layout_width">64dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:background">@drawable/settings_segment_bg</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
     <style name="SettingsColumnChoice" parent="SettingsRow">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_weight">1</item>

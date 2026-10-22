@@ -12,8 +12,8 @@ android {
         minSdk 21
         multiDexEnabled true
         targetSdk 34
-        versionCode 42
-        versionName '3.9.15'
+        versionCode 45
+        versionName '3.9.17'
     }
 
     signingConfigs {
