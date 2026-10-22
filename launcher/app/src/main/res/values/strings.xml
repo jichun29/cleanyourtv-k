@@ -137,7 +137,8 @@
     <string name="cc_tile_inputs">信号源</string>
     <string name="cc_tile_network">网络</string>
     <string name="cc_tile_settings">桌面设置</string>
-    <string name="cc_tile_wallpaper">壁纸</string>
+    <string name="cc_tile_wallpaper">壁纸设置</string>
+    <string name="cc_tile_check_update">检查更新</string>
     <string name="cc_tile_library">应用库</string>
     <string name="cc_tile_reorder">重排图标</string>
     <string name="cc_tile_about">关于桌面</string>

@@ -53,7 +53,7 @@ public final class QuickSettingsActivity extends Activity {
         // 第二行：低频维护
         addTile(tiles2, R.drawable.ic_picture, R.string.cc_tile_wallpaper, R.drawable.cc_tile_glass, TileKind.WALLPAPER, null);
         addTile(tiles2, R.drawable.ic_apps, R.string.cc_tile_library, R.drawable.cc_tile_glass, TileKind.LIBRARY, null);
-        addTile(tiles2, R.drawable.ic_swap_vert, R.string.cc_tile_reorder, R.drawable.cc_tile_glass, TileKind.REORDER, null);
+        addTile(tiles2, R.drawable.ic_refresh, R.string.cc_tile_check_update, R.drawable.cc_tile_glass, TileKind.CHECK_UPDATE, null);
 
 
         // 第一个磁贴先拿焦点，遥控器一进来就能动
@@ -62,7 +62,7 @@ public final class QuickSettingsActivity extends Activity {
 
     // ---- 磁贴 ---------------------------------------------------------------------------------
 
-    private enum TileKind { INPUTS, INTENT, LAUNCHER_SETTINGS, WALLPAPER, LIBRARY, REORDER }
+    private enum TileKind { INPUTS, INTENT, LAUNCHER_SETTINGS, WALLPAPER, LIBRARY, CHECK_UPDATE }
 
     private void addTile(LinearLayout row, int icon, int label, int glass, TileKind kind, Intent target) {
         View tile = getLayoutInflater().inflate(R.layout.item_cc_tile, row, false);
@@ -116,11 +116,9 @@ public final class QuickSettingsActivity extends Activity {
                             .setAction(MainActivity.ACTION_SHOW_LIBRARY)
                             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP));
                     break;
-                case REORDER:
+                case CHECK_UPDATE:
                     finish();
-                    startActivity(new Intent(this, MainActivity.class)
-                            .setAction(MainActivity.ACTION_START_REORDER)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP));
+                    startActivity(new Intent(this, UpdateActivity.class));
                     break;
                 default:
                     try {
