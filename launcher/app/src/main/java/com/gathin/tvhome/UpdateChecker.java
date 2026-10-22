@@ -229,7 +229,7 @@ public final class UpdateChecker {
         }
     }
 
-    /** 更新日志简写：去掉空行、行数压到 6 行内，适合电视屏。 */
+    /** 更新日志简写：去掉 markdown 语法，压到 8 行内，适合电视屏。 */
     public static String shortenNotes(String body) {
         if (body == null) return "";
         String[] lines = body.replace("\r", "").split("\n");
@@ -238,11 +238,22 @@ public final class UpdateChecker {
         for (String line : lines) {
             String t = line.trim();
             if (t.isEmpty()) continue;
-            if (t.startsWith("#")) continue; // 去掉 markdown 标题符号
-            if (t.startsWith("|")) continue; // 去掉表格行
-            if (t.startsWith("![")) continue; // 去掉图片
+            if (t.startsWith("![")) continue;          // 图片
+            if (t.startsWith("|")) continue;           // 表格
+            if (t.startsWith("---")) continue;         // 分隔线
+            if (t.startsWith(">")) t = t.substring(1).trim();   // 引用
+            // 标题：去掉 # 号，保留文字
+            if (t.startsWith("#")) {
+                t = t.replaceFirst("^#+\\s*", "");
+                if (t.isEmpty()) continue;
+            }
+            // 列表项：用 · 代替 - 和 *
+            if (t.startsWith("- ") || t.startsWith("* ")) t = "· " + t.substring(2).trim();
+            // 去掉加粗/斜体标记，电视上不渲染 markdown
+            t = t.replace("**", "").replace("__", "");
+            if (t.isEmpty()) continue;
             sb.append(t).append('\n');
-            if (++kept >= 6) break;
+            if (++kept >= 8) break;
         }
         String r = sb.toString().trim();
         return r.isEmpty() ? "修复若干问题，体验更稳定" : r;

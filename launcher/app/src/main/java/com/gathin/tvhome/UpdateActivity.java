@@ -7,15 +7,16 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /**
- * 检查更新页 v2（K 2026-10-22）。
+ * 检查更新页 v4（K 2026-10-22）。
  *
- * 布局：左侧版本信息 + 右侧更新日志（可滚动），比堆在中间的卡片更适合宽屏电视。
- * 新增：无更新时也显示当前版本的更新日志，让用户知道自己用的版本带了什么。
+ * 布局：单列卡片——标题 / 状态行（状态 + 版本胶囊）/ 更新日志 / 右对齐按钮行。
+ * 之前做过左右双栏，但左边只有三行字、右边一个大空框，反而失衡；单列收紧更适合电视。
+ *
+ * 关键行为：无论有没有新版，都显示「当前版本」的更新日志，让用户知道自己在用什么。
  */
 public final class UpdateActivity extends Activity {
 
@@ -23,8 +24,8 @@ public final class UpdateActivity extends Activity {
     private TextView versionText;
     private TextView notesText;
     private TextView logTitle;
-    private LinearLayout actions;
-    private LinearLayout logPanel;
+    private Button downloadButton;
+    private Button skipButton;
     private ProgressBar progress;
 
     @Override
@@ -36,11 +37,13 @@ public final class UpdateActivity extends Activity {
         versionText = findViewById(R.id.updateVersions);
         notesText = findViewById(R.id.updateNotes);
         logTitle = findViewById(R.id.updateLogTitle);
-        actions = findViewById(R.id.updateActions);
-        logPanel = findViewById(R.id.updateLogPanel);
+        downloadButton = findViewById(R.id.updateDownload);
+        skipButton = findViewById(R.id.updateSkip);
         progress = findViewById(R.id.updateProgress);
 
         findViewById(R.id.updateClose).setOnClickListener(v -> finish());
+        downloadButton.setVisibility(View.GONE);
+        skipButton.setVisibility(View.GONE);
 
         check();
     }
@@ -49,44 +52,36 @@ public final class UpdateActivity extends Activity {
         statusText.setText("正在检查更新…");
         statusText.setTextColor(0xBFFFFFFF);
         progress.setVisibility(View.VISIBLE);
-        actions.setVisibility(View.GONE);
-        logPanel.setVisibility(View.GONE);
+        downloadButton.setVisibility(View.GONE);
+        skipButton.setVisibility(View.GONE);
+        notesText.setText("正在读取更新日志…");
 
         UpdateChecker.checkNow(this, r -> {
             progress.setVisibility(View.GONE);
             if (r.error != null) {
                 statusText.setText("检查失败");
                 statusText.setTextColor(0xFFFF6B6B);
-                versionText.setText(r.error);
-                // 失败时也显示当前版本的日志（从 GitHub 取当前 tag 的 body）
+                versionText.setText("v" + r.currentVersion);
                 showCurrentVersionLog(r.currentVersion);
                 return;
             }
             if (!r.hasUpdate) {
                 statusText.setText("已是最新版本");
                 statusText.setTextColor(0xFF4ADE80);
-                statusText.setTextSize(18);
-                versionText.setText(getString(R.string.update_current_line, r.currentVersion));
-                versionText.setTextColor(0x99FFFFFF);
-                // 显示当前版本的更新日志
+                versionText.setText("v" + r.currentVersion);
                 showCurrentVersionLog(r.currentVersion);
                 return;
             }
-            // 有新版：显示新版的更新日志
-            statusText.setText("发现新版本");
+            // 有新版本
+            statusText.setText("发现新版本 " + r.latestTag);
             statusText.setTextColor(0xFFFFB347);
-            statusText.setTextSize(18);
-            versionText.setText(getString(R.string.update_new_line, r.currentVersion, r.latestTag));
-            versionText.setTextColor(0xE6FFFFFF);
-            logTitle.setText("新版本 " + r.latestTag + " 更新内容");
+            versionText.setText("v" + r.currentVersion + " → " + r.latestTag);
+            logTitle.setText("新版本更新内容");
             notesText.setText(UpdateChecker.shortenNotes(r.body));
-            logPanel.setVisibility(View.VISIBLE);
-            actions.setVisibility(View.VISIBLE);
-
-            Button download = findViewById(R.id.updateDownload);
-            Button skip = findViewById(R.id.updateSkip);
-            download.setOnClickListener(v -> startDownload(r.apkUrl));
-            skip.setOnClickListener(v -> {
+            downloadButton.setVisibility(View.VISIBLE);
+            skipButton.setVisibility(View.VISIBLE);
+            downloadButton.setOnClickListener(v -> startDownload(r.apkUrl));
+            skipButton.setOnClickListener(v -> {
                 UpdateChecker.skipTag(this, r.latestTag);
                 finish();
             });
@@ -95,19 +90,17 @@ public final class UpdateActivity extends Activity {
 
     /** 显示当前版本的更新日志（从 GitHub 取当前 tag 的 release body）。 */
     private void showCurrentVersionLog(String currentVersion) {
-        // 当前版本对应的 tag（处理 -lite 后缀）
         String tag = "v" + currentVersion.replaceAll("-.*$", "");
         new Thread(() -> {
             String body = UpdateChecker.fetchTagBody(tag);
             runOnUiThread(() -> {
                 if (body != null && !body.isEmpty()) {
-                    logTitle.setText("当前版本 " + tag + " 更新内容");
+                    logTitle.setText(tag + " 更新内容");
                     notesText.setText(UpdateChecker.shortenNotes(body));
-                    logPanel.setVisibility(View.VISIBLE);
                 } else {
+                    // 空状态：一句话说清，不重复上面的"已是最新版本"
                     logTitle.setText("更新日志");
-                    notesText.setText("暂无当前版本的更新日志");
-                    logPanel.setVisibility(View.VISIBLE);
+                    notesText.setText("这个版本还没写更新日志。\n有新版时，这里会显示改了什么。");
                 }
             });
         }, "fetch-current-log").start();
@@ -118,12 +111,10 @@ public final class UpdateActivity extends Activity {
         if (apkUrl == null) return;
         String accelerated = "https://ghfast.top/" + apkUrl;
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(accelerated));
-            startActivity(i);
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(accelerated)));
         } catch (Exception e) {
             try {
-                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl));
-                startActivity(i);
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)));
             } catch (Exception ignored) {}
         }
     }
