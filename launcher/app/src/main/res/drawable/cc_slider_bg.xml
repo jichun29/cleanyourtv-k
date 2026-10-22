@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 控制中心滑块槽的背景（K 2026-10-22）：iOS 风格圆角 18dp 的半透明块。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#2BFFFFFF" />
+    <corners android:radius="18dp" />
+</shape>

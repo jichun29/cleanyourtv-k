@@ -17,6 +17,8 @@
         tools:ignore="CoarseFineLocation" />
     <!-- K 定制: 直接卸载应用, 不跳第三方管理页 -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <!-- K 2026-10-22 控制中心调音量（普通权限，无需运行时申请） -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->

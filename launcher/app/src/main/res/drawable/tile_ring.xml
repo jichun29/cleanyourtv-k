@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 磁贴焦点描边（K 2026-10-22）：照 Apple TV「增强对比度」焦点样式，获得焦点时在磁贴外沿
+     画一圈 2dp 白框。做成 foreground 而不是 background，这样带横幅图的磁贴也有描边，
+     而且不额外绘制整块背景（电视 GPU 弱，只描边几乎不要钱）。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <corners android:radius="16dp" />
+            <stroke android:width="2dp" android:color="#F2FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+</selector>

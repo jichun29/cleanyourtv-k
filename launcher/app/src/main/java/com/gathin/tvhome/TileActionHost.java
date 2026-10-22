@@ -7,4 +7,10 @@ package com.gathin.tvhome;
 interface TileActionHost {
     /** Enter reorder mode with the given tile (component flat key) already picked up. */
     void startReorderCarrying(String key);
+
+    /** Hide the app's tile from Home (K 2026-10-22, 长按 OK 菜单)；app 还在，只是不在桌面显示。 */
+    void hideTile(String pkg);
+
+    /** The launcher's root view, for dialogs the adapter shows on its own. */
+    android.view.ViewGroup launcherRoot();
 }

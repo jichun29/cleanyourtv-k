@@ -91,6 +91,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private static final int LAUNCHER_SETTINGS_REQUEST = 42;
     /** Sent by QuickSettingsActivity: open Launcher settings from here so Home rebuilds when they close. */
     static final String ACTION_LAUNCHER_SETTINGS = "com.gathin.tvhome.action.LAUNCHER_SETTINGS";
+    /** 控制中心 → 信号源：回到 Home 显示 HDMI/AV 菜单（K 2026-10-22）。 */
+    static final String ACTION_SHOW_INPUTS = "com.gathin.tvhome.action.SHOW_INPUTS";
+    /** 控制中心 → 壁纸与屏保：回到 Home 打开壁纸面板（K 2026-10-22）。 */
+    static final String ACTION_SHOW_WALLPAPER = "com.gathin.tvhome.action.SHOW_WALLPAPER";
+    /** 控制中心 → 应用库（K 2026-10-22）。 */
+    static final String ACTION_SHOW_LIBRARY = "com.gathin.tvhome.action.SHOW_LIBRARY";
+    /** 控制中心 → 直接进重排模式（K 2026-10-22）。 */
+    static final String ACTION_START_REORDER = "com.gathin.tvhome.action.START_REORDER";
     /** Tiles per row and dock slots (res/values/config.xml, columns). Set in onCreate. */
     static int COLUMNS = 4;
     private boolean rtlAppGrid;
@@ -202,6 +210,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private boolean promptsPaused;
     /** Rebuild the tiles on resume: Home was fully hidden by an app, or Home was pressed. Not after a side panel such as Wi-Fi settings. */
     private boolean rebuildOnResume = true;
+    /** 回到 Home 时判断要不要重建磁贴（上游 v2.6.0 移植，K 2026-10-22）。 */
+    private final TileRefresh tileRefresh = new TileRefresh();
+    /** 上次重建磁贴时的 PackageManager sequence number；-1 = 还没建过（下次必重建）。 */
+    private int lastRebuildSeq = -1;
     /** The Inputs or Module cards dropdown while one is open, so onPause can close it. */
     private PopupWindow openPopup;
     /** Reorder mode is on (top-bar button). */
@@ -233,7 +245,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             // Updates send REMOVED followed by ADDED; keep the tile until the new APK is ready.
             if (Intent.ACTION_PACKAGE_REMOVED.equals(intent.getAction())
                     && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return;
-            reloadApps(false);
+            // 前台立刻重建；后台只标记，等回 Home 时一次性重建（上游 v2.6.0）
+            if (tileRefresh.onPackagesChanged()) reloadApps(false);
             if (appLibrary != null) appLibrary.refresh();
         }
     };
@@ -474,6 +487,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
         btnInputs = findViewById(R.id.btnInputs);
         View btnSettings = findViewById(R.id.btnSettings);
+        // K 2026-10-22：右上角顶栏整组默认隐藏（「完全不必要」，功能全进控制中心）。
+        // config.xml 设 top_bar=true 才显示；同时仍受 icon_only_buttons / show_network_pill 等细项限制。
+        View topButtons = findViewById(R.id.topButtons);
+        if (topButtons != null) topButtons.setVisibility(cfg.topBar ? View.VISIBLE : View.GONE);
         btnInputs.setOnClickListener(v -> showInputs());
         btnWifi.setOnClickListener(v -> openNetworkPill());
         btnWifi.setOnLongClickListener(v -> {
@@ -557,10 +574,34 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     }
 
     private boolean openLauncherSettingsIfAsked(Intent intent) {
-        if (intent == null || !ACTION_LAUNCHER_SETTINGS.equals(intent.getAction())) return false;
-        setIntent(new Intent(Intent.ACTION_MAIN));
-        startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
-        return true;
+        if (intent == null) return false;
+        if (ACTION_LAUNCHER_SETTINGS.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            startActivityForResult(new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
+            return true;
+        }
+        // 控制中心（菜单键）交回来的两个动作：菜单已关，直接在 Home 上把对应面板弹出来。
+        if (ACTION_SHOW_INPUTS.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            root.post(this::showInputs);
+            return true;
+        }
+        if (ACTION_SHOW_WALLPAPER.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            root.post(() -> wallpapers.showPicker());
+            return true;
+        }
+        if (ACTION_SHOW_LIBRARY.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            root.post(this::onLibraryRequested);
+            return true;
+        }
+        if (ACTION_START_REORDER.equals(intent.getAction())) {
+            setIntent(new Intent(Intent.ACTION_MAIN));
+            root.post(this::toggleReorder);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -606,6 +647,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     protected void onStart() {
         super.onStart();
         started = true;
+        tileRefresh.onStart();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(timeReceiver, timeFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -634,6 +676,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             // 内存紧张时壁纸位图被放开（tvhome-zh v1.4.1 移植）：回桌面重新解码
             memoryReleased = false;
             wallpapers.restore();
+        }
+        // 上游 v2.6.0「秒回 Home」：只有 App 真的变过才重建磁贴，否则只把焦点放回去。
+        // 原来每次 onStop 都把 rebuildOnResume 置 true，导致从任何 App 回来都要重载一遍并重播入场动画。
+        switch (tileRefresh.onResume(packagesChangedSinceRebuild())) {
+            case REBUILD:
+                tilesReady = false;
+                reloadApps(true);
+                break;
+            case REFOCUS:
+                // 磁贴没变：不重播入场，只恢复焦点（跟重建后的落点一致）
+                tilesReady = false;
+                restoreFocusOnly();
+                break;
+            default:
+                break;
         }
         rebuildOnResume = false;
         updateGreeting();
@@ -719,6 +776,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         adapter.reload(cards.isEmpty() ? none : CardFeature.run(() -> Cards.shown(cards), none));
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
+        // 记下这次重建对应的包序列号，供「秒回 Home」判断期间有没有装/卸/更新过 App
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                android.content.pm.ChangedPackages cp = getPackageManager().getChangedPackages(0);
+                if (cp != null) lastRebuildSeq = cp.getSequenceNumber();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     /**
@@ -777,7 +842,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         unregisterReceiver(packageReceiver);
         unregisterReceiver(timeReceiver);
         handler.removeCallbacks(clockCheck);
-        rebuildOnResume = true;
+        // 上游 v2.6.0：别的 App 占了屏幕，回来时只恢复焦点；是否重建交给 tileRefresh 判断。
+        tileRefresh.onStop();
     }
 
     /**
@@ -835,6 +901,81 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         return false;
     }
 
+    // ---- 长按 OK = 应用菜单（K 2026-10-22）------------------------------------------------------
+
+    /** 长按 OK 的阈值；遥控器长按一般会在 500ms 后开始连发 repeat，这里自己计时更稳。 */
+    private static final long LONG_OK_MS = 550;
+    /** OK 已按下、还没决定是「单击打开」还是「长按弹菜单」。 */
+    private boolean okHeld;
+    private int okHeldPos = -1;
+    private String okHeldKey;
+    private final Runnable okLongPress = new Runnable() {
+        @Override
+        public void run() {
+            if (!okHeld) return;
+            okHeld = false;              // 已消费成长按，抬手时不能再打开 App
+            okLongPressFired = true;
+            if (adapter != null && okHeldPos >= 0) {
+                AppAdapter.Entry e = adapter.getEntryAt(okHeldPos);
+                if (e != null && e.kind == AppAdapter.Entry.APP) adapter.showTileActions(e);
+            }
+        }
+    };
+    private boolean okLongPressFired;
+
+    /**
+     * 磁贴上的 OK：按下时先扣住，550ms 内抬手 = 单击（照旧打开 App），超时 = 弹应用菜单。
+     * 不在磁贴上（顶部按钮等）时完全不插手，交给系统默认处理，保证按钮手感不变。
+     */
+    private boolean handleOkPress(KeyEvent event) {
+        if (reordering || dockEditing) return false;   // 重排/编辑 Dock 有自己的 OK 语义
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (event.getRepeatCount() > 0) {
+                // 系统自己判定了长按；此时已经被计时器接管则不重复弹窗
+                if (okHeld && !okLongPressFired) {
+                    handler.removeCallbacks(okLongPress);
+                    okLongPress.run();
+                }
+                return okHeld || okLongPressFired;
+            }
+            int pos = focusedTilePosition();
+            if (pos < 0 || adapter == null) return false;
+            AppAdapter.Entry e = adapter.getEntryAt(pos);
+            if (e == null || e.kind != AppAdapter.Entry.APP) return false;
+            okHeld = true;
+            okLongPressFired = false;
+            okHeldPos = pos;
+            handler.postDelayed(okLongPress, LONG_OK_MS);
+            return true;
+        }
+        if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (!okHeld) {
+                // 已经被长按消费掉：抬手只是收尾，绝不能落成「打开 App」
+                if (okLongPressFired) { okLongPressFired = false; return true; }
+                return false;
+            }
+            okHeld = false;
+            handler.removeCallbacks(okLongPress);
+            int pos = okHeldPos;
+            okHeldPos = -1;
+            if (pos >= 0 && adapter != null) {
+                AppAdapter.Entry e = adapter.getEntryAt(pos);
+                if (e != null && e.kind == AppAdapter.Entry.APP) {
+                    adapter.launchEntry(e);
+                    return true;
+                }
+            }
+            return false;
+        }
+        return okHeld;
+    }
+
+    /** 菜单键：打开控制中心（信号源/网络/显示/音量/亮度/桌面设置）。 */
+    private void openControlCenter() {
+        startActivity(new Intent(this, QuickSettingsActivity.class)
+                .putExtra(QuickSettingsActivity.EXTRA_SOURCE, QuickSettingsActivity.SOURCE_MENU_KEY));
+    }
+
     // ---- reorder ---------------------------------------------------------------------------------
 
     /** Blue the glass turns while reorder mode is on. */
@@ -850,18 +991,14 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (handleSettingsKey(event)) return true;
+        // 长按 OK（K 2026-10-22）：焦点在 App 磁贴上时弹「打开/移动/隐藏/应用信息/卸载」玻璃弹窗。
+        // 单按 OK 仍然直接打开 App，所以要在按下时把 OK 扣住、到长按阈值或抬手时才放行。
+        if (event.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+            if (handleOkPress(event)) return true;
+        }
         if (event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_MENU) {
-            // 遥控器菜单键(K 定制):聚焦在 App tile 上时弹「打开/管理/卸载」玻璃弹窗;
-            // 焦点不在 App 上(顶部按钮/时钟/空白处)时打开壁纸设置。
-            int pos = focusedTilePosition();
-            if (pos >= 0 && adapter != null) {
-                AppAdapter.Entry e = adapter.getEntryAt(pos);
-                if (e != null && e.kind == AppAdapter.Entry.APP) {
-                    adapter.showTileActions(e);
-                    return true;
-                }
-            }
-            wallpapers.showPicker();
+            // 菜单键（K 2026-10-22）= 控制中心：信号源/网络/显示/音量/亮度/桌面设置。
+            openControlCenter();
             return true;
         }
         if (!reordering) return super.dispatchKeyEvent(event);
@@ -1004,6 +1141,26 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         dimOthers();
     }
 
+    /** K 2026-10-22：长按 OK 菜单「从主屏幕隐藏」——记进 LibraryApps 的 removed 集合，立即重建磁贴。 */
+    @Override
+    public void hideTile(String pkg) {
+        if (pkg == null || pkg.isEmpty()) return;
+        boolean ok = LibraryApps.save(this, pkg, false);
+        if (!ok) {
+            Toast.makeText(this, R.string.not_available, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        hiddenApps.add(pkg);
+        reloadTiles();
+        restoreFocus();
+        Toast.makeText(this, getString(R.string.action_hidden, pkg), Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public android.view.ViewGroup launcherRoot() {
+        return root;
+    }
+
     /** K 定制:菜单键弹窗「移动位置」——进入重排模式并直接拿起指定 tile。 */
     @Override
     public void startReorderCarrying(String key) {
@@ -1129,7 +1286,27 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         // Home 按 Back：直接启动自家时钟屏保 ClockActivity。
         // 不走 Somnambulator（系统屏保启动器）——小米电视的 Somnambulator 依赖 screensaver_components 设置，
         // 未设置时会启动后立即退出（logcat: Sandman Activating dream → Waking up from dream），等于没反应。
+        //
+        // K 2026-10-22 修正：原来无条件启动屏保——任何叠在 Home 上的东西（控制中心、弹窗）按返回键，
+        // 事件落到 Home 的 onBackPressed，结果进入了屏保而不是关闭上层，看起来像「控制中心关不掉」。
+        // 现在只有真正在 Home 上（没有弹窗、没有可见的 popup）才进屏保。
+        if (drawerOpen() || hasVisiblePopup()) {
+            super.onBackPressed();
+            return;
+        }
         startActivity(new Intent(this, ClockActivity.class));
+    }
+
+    /** 有我们自己的弹窗/面板开着时为 true：这时返回键应该先关它，不该进屏保。 */
+    private boolean hasVisiblePopup() {
+        if (openPopup != null && openPopup.isShowing()) return true;
+        if (cardPrompt != null && cardPrompt.isShowing()) return true;
+        return false;
+    }
+
+    /** 应用库抽屉开着（AppLibraryDialog 自己处理返回键，这里只是别把事件吞成屏保）。 */
+    private boolean drawerOpen() {
+        return appLibrary != null;
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -1145,7 +1322,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             openPopup = null;
             if (libraryFromTopBar) {
                 libraryFromTopBar = false;
-                btnLibraryTop.requestFocus();
+                // 顶栏已隐藏（K 2026-10-22）时没有这个按钮可回去，改回第一个磁贴
+                if (btnLibraryTop.getVisibility() == View.VISIBLE) {
+                    btnLibraryTop.requestFocus();
+                } else {
+                    libraryFocusPending = true;
+                    grid.post(() -> {
+                        if (libraryFocusPending && appLibrary == null && hasWindowFocus() && !isFinishing()) focusTile(0);
+                    });
+                }
                 return;
             }
             libraryFocusPending = true;
@@ -1756,7 +1941,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     rtlAppGrid, keyCode == KeyEvent.KEYCODE_DPAD_LEFT);
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-            if (position < COLUMNS) return false;          // dock row: let focus move to the top bar
+            if (position < COLUMNS) {
+                // 顶栏隐藏时（K 2026-10-22）上方没有可聚焦的按钮：把按键吞掉，焦点留在原地，
+                // 否则默认焦点搜索会跳到看不见的地方（旧 bug：点了没反应/焦点丢失）。
+                return topBarHidden();
+            }
             target = position - COLUMNS;
         } else {
             int lastRowStart = ((count - 1) / COLUMNS) * COLUMNS;
@@ -1771,6 +1960,41 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         grid.playSoundEffect(keyCode == KeyEvent.KEYCODE_DPAD_UP
                 ? SoundEffectConstants.NAVIGATION_UP : SoundEffectConstants.NAVIGATION_DOWN);
         return true;
+    }
+
+    /** 顶栏被隐藏（config.xml top_bar=false，K 2026-10-22 默认）时为 true。 */
+    private boolean topBarHidden() {
+        View bar = findViewById(R.id.topButtons);
+        return bar == null || bar.getVisibility() != View.VISIBLE;
+    }
+
+    /** 只把焦点放回上次的位置，不重建磁贴、不播入场动画（秒回 Home 用）。 */
+    private void restoreFocusOnly() {
+        final int pos = lastFocusedKey != null ? adapter.positionOf(lastFocusedKey) : lastFocused;
+        grid.post(() -> {
+            focusTile(pos >= 0 ? pos : Math.max(0, lastFocused));
+            tilesReady = true;
+            showCardPrompt();
+        });
+    }
+
+    /**
+     * 自上次构建磁贴以来，安装/卸载/更新/启停过的包名集合（上游 v2.6.0 移植）。
+     * 用 PackageManager.getChangedPackages 补齐「Home 在后台时漏掉的广播」。
+     */
+    private boolean packagesChangedSinceRebuild() {
+        if (lastRebuildSeq < 0) return true;
+        try {
+            if (Build.VERSION.SDK_INT >= 26) {
+                android.content.pm.PackageManager pm = getPackageManager();
+                android.content.pm.ChangedPackages changed =
+                        pm.getChangedPackages(lastRebuildSeq);
+                return changed != null && changed.getPackageNames() != null
+                        && !changed.getPackageNames().isEmpty();
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
 
     @Override public void onLibraryFocused() {

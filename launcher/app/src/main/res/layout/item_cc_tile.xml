@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 控制中心图标磁贴布局（K 2026-10-22）：64dp 圆角方块，图标居中 + 名称。
+     焦点态文字变黑（配白底），跟 iOS 控制中心一致。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="84dp"
+    android:layout_height="96dp"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:paddingTop="4dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:id="@+id/tileIconBg"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:background="@drawable/cc_tile_bg"
+        android:gravity="center"
+        android:duplicateParentState="true">
+
+        <ImageView
+            android:id="@+id/tileIcon"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tileLabel"
+        android:layout_width="84dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:textColor="#D9FFFFFF"
+        android:duplicateParentState="true"
+        android:textSize="12sp"
+        android:fontFamily="@font/outfit_medium" />
+</LinearLayout>

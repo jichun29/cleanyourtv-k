@@ -101,11 +101,19 @@ final class WallpaperController {
         background.addView(current, new FrameLayout.LayoutParams(-1, -1));
         background.addView(incoming, new FrameLayout.LayoutParams(-1, -1));
         // Readability shade: keeps clock/dock text legible over bright scenery.
+        // K 2026-10-22：按上游 Aerial 的做法改成「左侧 + 底部」压暗——时钟和 App 名字都在左边和下方，
+        // 只压这两处，中间的天空/山景保持干净。原来是从上到下整体压暗，画面发灰。
         shade = new View(activity);
-        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x70000000, 0x30000000, 0x99000000}));
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{0xB3000000, 0x4D000000, 0x00000000}));
         shade.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         background.addView(shade, new FrameLayout.LayoutParams(-1, -1));
+        // 底部再压一层，Dock 那一排的名字永远看得清
+        View bottomShade = new View(activity);
+        bottomShade.setBackground(new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP,
+                new int[]{0xCC000000, 0x80000000, 0x00000000}));
+        bottomShade.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        background.addView(bottomShade, new FrameLayout.LayoutParams(-1, -1));
         display(useDefault ? -1 : (bingMode ? -2 : index), false);
         // 精简版不在启动时联网拉必应图（老盒子开机本来就慢，别再加一次网络+解码）。
         if (!BuildConfig.LITE) refreshBing();

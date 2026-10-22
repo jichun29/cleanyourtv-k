@@ -102,6 +102,23 @@
     <string name="action_move">移动位置</string>
     <string name="action_details">卸载应用</string>
     <string name="action_info">应用信息</string>
+    <!-- K 2026-10-22：长按 OK 的应用菜单新增「从主屏幕隐藏」 -->
+    <string name="action_hide">从主屏幕隐藏</string>
+    <string name="action_hidden">已隐藏：%1$s</string>
+    <!-- K 2026-10-22：菜单键控制中心 -->
+    <string name="cc_title">控制中心</string>
+    <string name="cc_inputs">信号源</string>
+    <string name="cc_volume">音量</string>
+    <string name="cc_wallpaper">壁纸与屏保</string>
+    <string name="cc_hint">左右调节音量 · 返回键关闭</string>
+    <!-- K 2026-10-22 iOS 风格磁贴名 -->
+    <string name="cc_tile_inputs">信号源</string>
+    <string name="cc_tile_network">网络</string>
+    <string name="cc_tile_settings">桌面设置</string>
+    <string name="cc_tile_wallpaper">壁纸</string>
+    <string name="cc_tile_library">应用库</string>
+    <string name="cc_tile_reorder">重排图标</string>
+    <string name="cc_tile_about">关于桌面</string>
     <string name="action_hint">返回键关闭 · 上下选择 · 确定执行</string>
     <string name="action_moved_top">已置顶：%1$s</string>
     <string name="dock_edit">Edit dock</string>

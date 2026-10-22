@@ -460,9 +460,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         android.widget.TextView btnMove = dlg.findViewById(R.id.btnMove);
         android.widget.TextView btnDetails = dlg.findViewById(R.id.btnDetails);
         android.widget.TextView btnInfo = dlg.findViewById(R.id.btnInfo);
+        android.widget.TextView btnHide = dlg.findViewById(R.id.btnHide);
         title.setText(e.label);
         pkg.setText(e.pkg);
         btnOpen.setOnClickListener(v -> { dlg.dismiss(); launch(e); } );
+        btnHide.setOnClickListener(v -> {
+            dlg.dismiss();
+            if (ctx instanceof TileActionHost) ((TileActionHost) ctx).hideTile(e.pkg);
+        });
         btnTop.setOnClickListener(v -> { dlg.dismiss(); moveToFront(e); });
         btnMove.setOnClickListener(v -> { dlg.dismiss(); startMoveMode(e); });
         btnDetails.setOnClickListener(v -> { dlg.dismiss(); uninstallApp(e.pkg); });
@@ -579,6 +584,11 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     /** Entry at a position, or null. Used by MainActivity to resolve the focused tile for MENU. */
     public Entry getEntryAt(int position) {
         return position >= 0 && position < items.size() ? items.get(position) : null;
+    }
+
+    /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */
+    void launchEntry(Entry e) {
+        launch(e);
     }
 
     /** Opens the tile's activity by explicit component, with no extras: a card can name nothing else. */
@@ -806,6 +816,15 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             final float density = v.getResources().getDisplayMetrics().density;
             // 圆角裁剪：API 21+ 走 outline（和磁贴圆角一致）；4.4 不裁剪，靠 XML 背景。
             Legacy.roundCorner(card);
+            // K 2026-10-22 焦点描边：照 Apple TV「增强对比度」样式，在磁贴外沿加一圈 2dp 白框。
+            // 用 LayerDrawable 叠在背景上而不是 android:foreground——FrameLayout 的 foreground 要 API 23，
+            // 本项目 minSdk 21。描边随 state_focused 自动切换，不用手写 focus 回调。
+            final Drawable base = card.getBackground();
+            final Drawable ring = v.getContext().getResources().getDrawable(R.drawable.tile_ring);
+            if (base != null && ring != null) {
+                card.setBackground(new android.graphics.drawable.LayerDrawable(
+                        new Drawable[]{base, ring}));
+            }
 
             card.setOnKeyListener((view, keyCode, event) -> {
                 if (event.getAction() != KeyEvent.ACTION_DOWN) return false;

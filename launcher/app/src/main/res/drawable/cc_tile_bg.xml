@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 控制中心图标磁贴（K 2026-10-22）：iOS 风格。
+     默认半透明深灰圆角；获得焦点时换成实色高亮（白底黑字），远看也能一眼找到焦点。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#F2FFFFFF" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#38FFFFFF" />
+            <corners android:radius="18dp" />
+        </shape>
+    </item>
+</selector>

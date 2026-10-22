@@ -72,7 +72,12 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         // edges: a full 14dp at the sides sliced the rounded ends flat (#454). Keep the sides, with the
         // 1dp edge line, inside the grid; the top and bottom have room.
         float side = Math.max(0f, Math.min(pad, Math.min(rect.left, parent.getWidth() - rect.right) - density));
-        rect.inset(-side, -pad);
+        // 上游 v2.6.0 #568（K 2026-10-22 移植）：首尾磁贴聚焦时会向外放大 ~7dp，贴着圆角端看起来被切。
+        // 整条 Dock 左右各留 22dp，聚焦的边磁贴仍有余量，两端留白对称。
+        float sidePad = 22 * density;
+        float sidePadded = Math.max(0f, Math.min(sidePad,
+                Math.min(rect.left, parent.getWidth() - rect.right) - density));
+        rect.inset(-sidePadded, -pad);
         rect.bottom += namesRoom;
         float radius = 26 * density;
         c.drawRoundRect(rect, radius, radius, band);

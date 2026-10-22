@@ -295,6 +295,8 @@
                 android:focusable="false"
                 android:visibility="gone" />
 
+            <!-- K 2026-10-22：右上角顶栏整组默认隐藏（K 评价「完全不必要」），全部功能进控制中心。
+                 config.xml 设 top_bar=true 才显示；同时受 icon_only_buttons / show_network_pill 限制。 -->
             <LinearLayout
                 android:id="@+id/topButtons"
                 android:layout_width="wrap_content"
@@ -304,7 +306,8 @@
                 android:layout_marginBottom="6dp"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/btnInputs"

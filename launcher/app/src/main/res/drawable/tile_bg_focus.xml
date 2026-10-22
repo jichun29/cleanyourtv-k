@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 磁贴背景（K 2026-10-22）：默认深灰圆角；获得焦点时加一圈 2dp 白描边，
+     远看也能一眼找到焦点（照 Apple TV「增强对比度」的焦点样式）。
+     描边用 inset stroke 而不是外层 padding，磁贴尺寸不变，不会挤动网格。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#FF1C1C1E" />
+            <corners android:radius="16dp" />
+            <stroke android:width="2dp" android:color="#F2FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FF1C1C1E" />
+            <corners android:radius="16dp" />
+        </shape>
+    </item>
+</selector>
