@@ -111,6 +111,7 @@
     <string name="cc_volume">音量</string>
     <string name="cc_wallpaper">壁纸与屏保</string>
     <string name="cc_hint">左右调节音量 · 返回键关闭</string>
+    <string name="cc_hint_tiles">方向键选择 · 确定执行 · 返回键关闭</string>
     <!-- K 2026-10-22 iOS 风格磁贴名 -->
     <string name="cc_tile_inputs">信号源</string>
     <string name="cc_tile_network">网络</string>

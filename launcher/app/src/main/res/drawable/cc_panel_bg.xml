@@ -1,7 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 控制中心面板背景（K 2026-10-22）：iOS 那种毛玻璃深灰大圆角。 -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#D91C1C1E" />
-    <corners android:radius="28dp" />
-    <stroke android:width="0.5dp" android:color="#33FFFFFF" />
-</shape>
+<!-- 控制中心面板背景（K 2026-10-22 v3）：澎湃 OS 柔光玻璃。
+     之前 D91C1C1E 太黑太实，把彩色磁贴都压灰了。现在降到 C4 并在上沿做出受光渐变，
+     背后壁纸能隐约透出来（真正的毛玻璃要靠 Android 12+ 的 blur，4.4/9 上没有，
+     所以用「半透明 + 顶部受光 + 细白边」这套在低版本也能成立的假玻璃）。 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 外柔光：面板四周一圈极淡白，玻璃浮起来 -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1AFFFFFF" />
+            <corners android:radius="36dp" />
+        </shape>
+    </item>
+    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#E6363A42"
+                android:centerColor="#D42A2D34"
+                android:endColor="#E61C1E23"
+                android:angle="270" />
+            <corners android:radius="30dp" />
+            <stroke android:width="1dp" android:color="#4DFFFFFF" />
+        </shape>
+    </item>
+</layer-list>

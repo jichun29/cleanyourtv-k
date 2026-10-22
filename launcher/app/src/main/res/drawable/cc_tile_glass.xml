@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 控制中心磁贴（K 2026-10-22 v5）：统一中性玻璃，不要五颜六色。
+     未选中：极淡的白玻璃（上亮下暗），跟桌面磁贴一个色系。
+     选中：白玻璃提亮 + 外圈柔光 + 更亮的描边——只用「明暗 + 描边」表达焦点，
+     不引入任何彩色。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <layer-list>
+            <!-- 外柔光 -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#33FFFFFF" />
+                    <corners android:radius="30dp" />
+                </shape>
+            </item>
+            <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#F2FFFFFF"
+                        android:centerColor="#D9E6E8EC"
+                        android:endColor="#BFC9CDD3"
+                        android:angle="270" />
+                    <corners android:radius="16dp" />
+                    <stroke android:width="2dp" android:color="#FFFFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#3DFFFFFF"
+                        android:centerColor="#1FFFFFFF"
+                        android:endColor="#12FFFFFF"
+                        android:angle="270" />
+                    <corners android:radius="16dp" />
+                    <stroke android:width="1dp" android:color="#2EFFFFFF" />
+                </shape>
+            </item>
+            <!-- 顶部高光条：玻璃上沿那道亮线 -->
+            <item android:bottom="44dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#33FFFFFF"
+                        android:endColor="#00FFFFFF"
+                        android:angle="270" />
+                    <corners android:topLeftRadius="16dp" android:topRightRadius="16dp" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

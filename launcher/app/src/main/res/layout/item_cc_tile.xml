@@ -12,16 +12,16 @@
 
     <FrameLayout
         android:id="@+id/tileIconBg"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="68dp"
+        android:layout_height="68dp"
         android:background="@drawable/cc_tile_bg"
         android:gravity="center"
         android:duplicateParentState="true">
 
         <ImageView
             android:id="@+id/tileIcon"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
             android:layout_gravity="center"
             android:contentDescription="@null" />
     </FrameLayout>
@@ -34,8 +34,9 @@
         android:gravity="center"
         android:singleLine="true"
         android:ellipsize="end"
-        android:textColor="#D9FFFFFF"
+        android:textColor="#E0FFFFFF"
         android:duplicateParentState="true"
-        android:textSize="12sp"
+        android:textSize="13.5sp"
+        android:letterSpacing="0.02"
         android:fontFamily="@font/outfit_medium" />
 </LinearLayout>

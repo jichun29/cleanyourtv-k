@@ -4,28 +4,27 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.PorterDuff;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.text.format.DateFormat;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 /**
  * 控制中心（K 2026-10-22 重做）：遥控器「菜单键」打开，iOS 状态栏式。
  *
- * 六枚圆角磁贴：信号源 / 网络 / 桌面设置 / 壁纸 / 应用库 / 重排图标；
- * 下方一条音量滑块（左右键直接调）。
+ * 六枚圆角磁贴：信号源 / 网络 / 桌面设置 / 壁纸 / 应用库 / 重排图标，点开即用。
  *
- * 设计取舍（记住「简洁桌面」）：
- * - 亮度滑块已按 K 拍板删掉——电视亮度交给系统画质设置，这里写系统亮度容易和厂商模式打架。
+ * 设计取舍（记住「简洁桌面」，2026-10-22 K 拍板）：
+ * - **不放音量和亮度**：遥控器本身就有音量键，多一层纯浪费；亮度交给电视自己的画质设置，
+ *   桌面写系统亮度会跟厂商模式打架，还要 WRITE_SETTINGS 特殊权限。控制中心只放「遥控器上没有的」。
+ * - **防烧屏**：面板是临时悬浮，停留时间以秒计（按返回/再按菜单键即关），不会长时间压在同一位置；
+ *   常驻的时钟屏保由 ClockScene 每分钟漂移+换色，两者都不给固定亮点留下烙印机会。
  * - 不做常驻线程、不联网；半透明独立任务，返回键或再按菜单键关闭。
  * - 焦点态白底黑字，和主界面磁贴的描边一脉相承，远看能找到焦点。
  */
@@ -36,9 +35,6 @@ public final class QuickSettingsActivity extends Activity {
     static final String SOURCE_MENU_KEY = "menu_key";
     static final String SOURCE_SETTINGS_KEY = "settings_key";
 
-    private AudioManager audio;
-    private ProgressBar volBar;
-    private TextView volValue;
     private final Handler main = new Handler(Looper.getMainLooper());
 
     @Override
@@ -46,24 +42,19 @@ public final class QuickSettingsActivity extends Activity {
         super.onCreate(state);
         setContentView(R.layout.activity_quick_settings);
         findViewById(R.id.scrim).setOnClickListener(v -> finish());
-        audio = (AudioManager) getSystemService(AUDIO_SERVICE);
-
-        TextView clock = findViewById(R.id.ccClock);
-        if (clock != null) clock.setText(DateFormat.getTimeFormat(this).format(System.currentTimeMillis()));
 
         LinearLayout tiles1 = findViewById(R.id.tiles1);
         LinearLayout tiles2 = findViewById(R.id.tiles2);
         // 第一行：高频动作
-        addTile(tiles1, R.drawable.ic_input, R.string.cc_tile_inputs, TileKind.INPUTS, null);
-        addTile(tiles1, R.drawable.ic_wifi, R.string.cc_tile_network, TileKind.INTENT,
+        addTile(tiles1, R.drawable.ic_input, R.string.cc_tile_inputs, R.drawable.cc_tile_glass, TileKind.INPUTS, null);
+        addTile(tiles1, R.drawable.ic_wifi, R.string.cc_tile_network, R.drawable.cc_tile_glass, TileKind.INTENT,
                 new Intent(Settings.ACTION_WIFI_SETTINGS));
-        addTile(tiles1, R.drawable.ic_home_settings, R.string.cc_tile_settings, TileKind.LAUNCHER_SETTINGS, null);
+        addTile(tiles1, R.drawable.ic_home_settings, R.string.cc_tile_settings, R.drawable.cc_tile_glass, TileKind.LAUNCHER_SETTINGS, null);
         // 第二行：低频维护
-        addTile(tiles2, R.drawable.ic_picture, R.string.cc_tile_wallpaper, TileKind.WALLPAPER, null);
-        addTile(tiles2, R.drawable.ic_apps, R.string.cc_tile_library, TileKind.LIBRARY, null);
-        addTile(tiles2, R.drawable.ic_swap_vert, R.string.cc_tile_reorder, TileKind.REORDER, null);
+        addTile(tiles2, R.drawable.ic_picture, R.string.cc_tile_wallpaper, R.drawable.cc_tile_glass, TileKind.WALLPAPER, null);
+        addTile(tiles2, R.drawable.ic_apps, R.string.cc_tile_library, R.drawable.cc_tile_glass, TileKind.LIBRARY, null);
+        addTile(tiles2, R.drawable.ic_swap_vert, R.string.cc_tile_reorder, R.drawable.cc_tile_glass, TileKind.REORDER, null);
 
-        bindVolume();
 
         // 第一个磁贴先拿焦点，遥控器一进来就能动
         if (tiles1.getChildCount() > 0) tiles1.getChildAt(0).requestFocus();
@@ -73,20 +64,30 @@ public final class QuickSettingsActivity extends Activity {
 
     private enum TileKind { INPUTS, INTENT, LAUNCHER_SETTINGS, WALLPAPER, LIBRARY, REORDER }
 
-    private void addTile(LinearLayout row, int icon, int label, TileKind kind, Intent target) {
+    private void addTile(LinearLayout row, int icon, int label, int glass, TileKind kind, Intent target) {
         View tile = getLayoutInflater().inflate(R.layout.item_cc_tile, row, false);
+        // 统一中性玻璃底（K 2026-10-22：不要五颜六色，简洁风）
+        tile.findViewById(R.id.tileIconBg).setBackgroundResource(glass);
         ImageView ic = tile.findViewById(R.id.tileIcon);
         TextView name = tile.findViewById(R.id.tileLabel);
         ic.setImageResource(icon);
-        ic.setColorFilter(0xE6FFFFFF, PorterDuff.Mode.SRC_IN);
+        ic.setColorFilter(0xFFE8E8EA, PorterDuff.Mode.SRC_IN);
         name.setText(label);
+        name.setTextColor(0xFFD5D5D8);
+        // 初始状态必须是「未选中」的暗度，否则首帧六枚一样亮（焦点层级立不起来）
+        tile.setAlpha(0.66f);
+        name.setAlpha(0.75f);
 
-        // 焦点态：图标方块变白底 + 图标转黑（跟 iOS 控制中心一致）。
-        // 注意：标签在方块**外面**，背景仍是深的，所以文字必须保持白色——之前一起变黑就糊成一片了。
+        // 焦点态（K 2026-10-22 v5）：统一中性玻璃，不玩彩色。
+        // 选中时磁贴变成浅色玻璃底，所以图标要转深色才看得见；未选中是白图标压在深玻璃上。
+        // 再加 1.06 倍放大和其余压暗，焦点一眼可辨。
         tile.setOnFocusChangeListener((v, focused) -> {
-            ic.setColorFilter(focused ? 0xFF111111 : 0xE6FFFFFF, PorterDuff.Mode.SRC_IN);
-            name.setTextColor(focused ? 0xFFFFFFFF : 0xD9FFFFFF);
-            name.setAlpha(focused ? 1f : 0.85f);
+            ic.setColorFilter(focused ? 0xFF1A1A1C : 0xFFE8E8EA, PorterDuff.Mode.SRC_IN);
+            name.setTextColor(focused ? 0xFFFFFFFF : 0xFFD5D5D8);
+            name.setAlpha(focused ? 1f : 0.75f);
+            v.animate().scaleX(focused ? 1.06f : 1f).scaleY(focused ? 1.06f : 1f)
+                    .setDuration(130).start();
+            v.setAlpha(focused ? 1f : 0.66f);
         });
 
         tile.setOnClickListener(v -> {
@@ -132,47 +133,6 @@ public final class QuickSettingsActivity extends Activity {
             }
         });
         row.addView(tile);
-    }
-
-    // ---- 音量 ---------------------------------------------------------------------------------
-
-    /** 音量槽：整行焦点，左右键调 STREAM_MUSIC（遥控器音量键走的就是这条流）。 */
-    private void bindVolume() {
-        View row = findViewById(R.id.volumeRow);
-        volBar = row.findViewById(R.id.volBar);
-        volValue = row.findViewById(R.id.volValue);
-        row.setOnKeyListener((v, keyCode, event) -> {
-            if (event.getAction() != KeyEvent.ACTION_DOWN) return false;
-            int step = event.getRepeatCount() > 0 ? 2 : 1;
-            if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { nudgeVolume(step); return true; }
-            if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { nudgeVolume(-step); return true; }
-            return false;
-        });
-        row.setOnClickListener(v -> {
-            if (audio != null) {
-                audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_TOGGLE_MUTE, 0);
-                renderVolume();
-            }
-        });
-        renderVolume();
-    }
-
-    private void nudgeVolume(int steps) {
-        if (audio == null) return;
-        int dir = steps > 0 ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
-        for (int i = 0; i < Math.abs(steps); i++) {
-            audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, AudioManager.FLAG_SHOW_UI);
-        }
-        renderVolume();
-    }
-
-    private void renderVolume() {
-        if (audio == null || volBar == null) return;
-        int max = Math.max(1, audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
-        int cur = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
-        int pct = Math.round(cur * 100f / max);
-        volBar.setProgress(pct);
-        volValue.setText(pct + "%");
     }
 
     // ---- 生命周期 -----------------------------------------------------------------------------

@@ -1,17 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 控制中心图标磁贴（K 2026-10-22）：iOS 风格。
-     默认半透明深灰圆角；获得焦点时换成实色高亮（白底黑字），远看也能一眼找到焦点。 -->
+<!-- 控制中心图标磁贴（K 2026-10-22 v2）：澎湃 OS 柔光玻璃质感。
+     默认：竖向渐变半透明白（上亮下暗，模拟玻璃受光面）+ 1dp 顶部高光边 + 大圆角。
+     焦点：实心白（iOS/澎湃 的选中态），圆圈外再加一点柔光。 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
-        <shape android:shape="rectangle">
-            <solid android:color="#F2FFFFFF" />
-            <corners android:radius="18dp" />
-        </shape>
+        <layer-list>
+            <!-- 柔光晕：比方块大一圈的极淡白，模拟光从玻璃里透出来的扩散 -->
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#1FFFFFFF" />
+                    <corners android:radius="30dp" />
+                </shape>
+            </item>
+            <item android:left="4dp" android:top="4dp" android:right="4dp" android:bottom="4dp">
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#FFFFFFFF"
+                        android:endColor="#F0F4F6FA"
+                        android:angle="270" />
+                    <corners android:radius="18dp" />
+                    <stroke android:width="1dp" android:color="#AAFFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#38FFFFFF" />
-            <corners android:radius="18dp" />
-        </shape>
+        <layer-list>
+            <!-- 顶部高光：模拟玻璃上沿的反光条 -->
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:startColor="#4DFFFFFF"
+                        android:centerColor="#1FFFFFFF"
+                        android:endColor="#14FFFFFF"
+                        android:angle="270" />
+                    <corners android:radius="18dp" />
+                    <stroke android:width="1dp" android:color="#33FFFFFF" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </selector>
