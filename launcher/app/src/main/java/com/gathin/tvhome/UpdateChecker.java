@@ -95,6 +95,63 @@ public final class UpdateChecker {
         ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY_SKIPPED, tag).apply();
     }
 
+    /** 下载进度回调，都在主线程。 */
+    public interface DownloadCallback {
+        void onProgress(int percent);   // 0-100；-1 = 服务器没给总长，瞎转
+        void onDone(java.io.File apk);  // 下载完，准备装
+        void onFailed();
+    }
+
+    /**
+     * 一键 OTA（2026-10-23，参考 aerial-tv 的 Updates.kt）：应用内下载 APK 到缓存，
+     * 按加速源顺序试，通一个就下完。下载完由 UpdateActivity 交系统安装器。
+     */
+    public static void downloadApk(Context ctx, String apkUrl, DownloadCallback cb) {
+        new Thread(() -> {
+            java.io.File out = new java.io.File(ctx.getCacheDir(), "update.apk");
+            for (String src : apkMirrors(apkUrl)) {
+                if (downloadOne(src, out, ctx, cb)) {
+                    new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> cb.onDone(out));
+                    return;
+                }
+            }
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(cb::onFailed);
+        }, "update-download").start();
+    }
+
+    private static boolean downloadOne(String url, java.io.File out, Context ctx, DownloadCallback cb) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(8000);
+            c.setReadTimeout(15000);
+            c.setRequestProperty("User-Agent", "CleanYourTV-Launcher");
+            if (c.getResponseCode() != 200) return false;
+            int total = c.getContentLength();
+            InputStream in = c.getInputStream();
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(out);
+            byte[] buf = new byte[16384];
+            int n;
+            long got = 0;
+            android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+            while ((n = in.read(buf)) != -1) {
+                fos.write(buf, 0, n);
+                got += n;
+                final int pct = total > 0 ? (int) (got * 100 / total) : -1;
+                main.post(() -> cb.onProgress(pct));
+            }
+            fos.close();
+            in.close();
+            // 下完的 APK 至少要有 APK 的样子（zip 魔数 PK），否则是镜像返回的错误页。
+            return out.length() > 100_000;
+        } catch (Exception e) {
+            Log.w(TAG, "download " + url + ": " + e.getMessage());
+            return false;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
     private static String skippedTag(Context ctx) {
         return ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString(KEY_SKIPPED, "");
     }

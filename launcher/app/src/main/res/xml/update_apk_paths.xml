@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 一键 OTA：下载到 cache 的 update.apk 通过 FileProvider 交系统安装器。 -->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <cache-path name="update" path="." />
+</paths>

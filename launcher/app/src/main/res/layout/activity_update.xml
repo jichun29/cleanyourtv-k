@@ -100,7 +100,7 @@
                 style="@style/TopButton"
                 android:layout_width="160dp"
                 android:layout_height="46dp"
-                android:text="下载更新"
+                android:text="下载并安装"
                 android:visibility="gone" />
 
             <Button

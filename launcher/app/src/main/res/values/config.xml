@@ -205,4 +205,7 @@
          Live TV window does not keep the screen on (CVTE): there the system screensaver would start in the
          middle of a programme. Can also be set with "home_idle_clock_minutes": 10 in a theme's config.json. -->
     <integer name="home_idle_clock_minutes">0</integer>
+
+    <!-- 天气城市（2026-10-23 K 定制）：中文城市名（如 "宜昌"）写死就不按 IP 猜了；空 = 按公网 IP 猜。 -->
+    <string name="weather_city" translatable="false"></string>
 </resources>

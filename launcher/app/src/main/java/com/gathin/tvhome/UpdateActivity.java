@@ -106,16 +106,71 @@ public final class UpdateActivity extends Activity {
         }, "fetch-current-log").start();
     }
 
-    /** 下载：把加速链接交给系统浏览器。 */
+    /** 下载：应用内下完 APK 交系统安装器（一键 OTA，2026-10-23）。 */
     private void startDownload(String apkUrl) {
-        if (apkUrl == null) return;
-        String accelerated = "https://ghfast.top/" + apkUrl;
-        try {
-            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(accelerated)));
-        } catch (Exception e) {
+        if (apkUrl == null || downloading) return;
+        // Android 8+ 要先有「安装未知应用」权限，没有就跳设置页让用户开。
+        if (android.os.Build.VERSION.SDK_INT >= 26
+                && !getPackageManager().canRequestPackageInstalls()) {
+            statusText.setText(R.string.update_install_need_permission);
+            statusText.setTextColor(0xFFFFB347);
             try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(apkUrl)));
-            } catch (Exception ignored) {}
+                startActivity(new Intent(android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                startActivity(new Intent(android.provider.Settings.ACTION_SECURITY_SETTINGS));
+            }
+            return;
+        }
+        downloading = true;
+        downloadButton.setEnabled(false);
+        skipButton.setVisibility(View.GONE);
+        statusText.setTextColor(0xBFFFFFFF);
+        UpdateChecker.downloadApk(this, apkUrl, new UpdateChecker.DownloadCallback() {
+            @Override public void onProgress(int percent) {
+                statusText.setText(percent >= 0
+                        ? getString(R.string.update_downloading, percent)
+                        : "正在下载…");
+            }
+            @Override public void onDone(java.io.File apk) {
+                downloading = false;
+                install(apk);
+            }
+            @Override public void onFailed() {
+                downloading = false;
+                statusText.setText(R.string.update_download_failed);
+                statusText.setTextColor(0xFFFF6B6B);
+                downloadButton.setEnabled(true);
+                skipButton.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    private boolean downloading;
+
+    /** 下完了：FileProvider 拿 content:// Uri，交系统安装器。装完系统会自己重启桌面。 */
+    private void install(java.io.File apk) {
+        try {
+            Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                    this, getPackageName() + ".updateapk", apk);
+            Intent i = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                    .setData(uri)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(i);
+        } catch (Exception e) {
+            // 老系统没有 ACTION_INSTALL_PACKAGE，退 VIEW。
+            try {
+                Uri uri = androidx.core.content.FileProvider.getUriForFile(
+                        this, getPackageName() + ".updateapk", apk);
+                Intent i = new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(uri, "application/vnd.android.package-archive")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(i);
+            } catch (Exception e2) {
+                statusText.setText("无法打开安装器");
+                statusText.setTextColor(0xFFFF6B6B);
+                downloadButton.setEnabled(true);
+            }
         }
     }
 

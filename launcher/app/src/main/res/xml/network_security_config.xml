@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 天气接口在老 Android（<7.1）上不认 Let's Encrypt 证书，这三个站同样走 HTTP，只放行它们。 -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">api.open-meteo.com</domain>
+        <domain includeSubdomains="false">geocoding-api.open-meteo.com</domain>
+        <domain includeSubdomains="false">ipinfo.io</domain>
+    </domain-config>
+</network-security-config>

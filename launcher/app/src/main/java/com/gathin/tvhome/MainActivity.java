@@ -152,6 +152,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private boolean memoryReleased;
     private TextView greeting;
     private View clockBlock;
+    private TextView weatherText;
     private View btnInputs;
     private TextView btnWifi;
     private TextView shamsiDate;
@@ -338,6 +339,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         greeting = findViewById(R.id.greeting);
         clockBlock = findViewById(R.id.leftBlock);
         greetingColor = greeting.getCurrentTextColor();
+        // 天气（2026-10-23，移植自 aerial-tv）：时钟行右边一小块，取到就显示，取不到一直 gone。
+        weatherText = findViewById(R.id.weather);
+        if (!BuildConfig.LITE) {
+            Weather.init(this, now -> {
+                if (now == null) {
+                    weatherText.setVisibility(View.GONE);
+                } else {
+                    weatherText.setText(now.label());
+                    weatherText.setVisibility(View.VISIBLE);
+                }
+            });
+        }
         btnWifi = findViewById(R.id.btnWifi);
         shamsiDate = findViewById(R.id.shamsiDate);
         stats = findViewById(R.id.stats);
@@ -685,6 +698,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     protected void onResume() {
         super.onResume();
+        HomeGuardService.setHomeInFront(this, true);   // 守护靠这个分辨「被杀时我们在前台」
+        if (!BuildConfig.LITE) Weather.refreshIfStale(); // 天气一小时一取，回到前台顺手看一眼
         // A festival that started or ended while Home was in the background: rebuild with or without it.
         if (festive != festival.active(LocalDate.now())) {
             recreate();
@@ -842,6 +857,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     protected void onPause() {
         super.onPause();
+        HomeGuardService.setHomeInFront(this, false);
         root.removeCallbacks(showIdleClock);
         endReorder();   // Home or another app while reordering keeps the order so far
         wallpaperPlayer.stop();
@@ -1256,15 +1272,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     @Override
     public void onBackPressed() {
-        // Home 按 Back：直接启动自家时钟屏保 ClockActivity。
+        // Home 按 Back：网格不在第一行时先回顶（tvOS 行为，移植自 aerial-tv）；
+        // 已在第一行才进屏保。
         // 不走 Somnambulator（系统屏保启动器）——小米电视的 Somnambulator 依赖 screensaver_components 设置，
         // 未设置时会启动后立即退出（logcat: Sandman Activating dream → Waking up from dream），等于没反应。
         //
         // K 2026-10-22 修正：原来无条件启动屏保——任何叠在 Home 上的东西（控制中心、弹窗）按返回键，
         // 事件落到 Home 的 onBackPressed，结果进入了屏保而不是关闭上层，看起来像「控制中心关不掉」。
-        // 现在只有真正在 Home 上（没有弹窗、没有可见的 popup）才进屏保。
+        // 现在只有真正在 Home 上（没有弹窗、没有可见的 popup）才回顶/进屏保。
         if (drawerOpen() || hasVisiblePopup()) {
             super.onBackPressed();
+            return;
+        }
+        if (grid.canScrollVertically(-1)) {
+            scrollToTopClean();
             return;
         }
         startActivity(new Intent(this, ClockActivity.class));

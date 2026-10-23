@@ -128,6 +128,8 @@ final class Config {
     final boolean ambientGlow;
     /** Minutes Home may sit untouched before the clock screensaver (config.xml, home_idle_clock_minutes); 0 is off. */
     final int homeIdleClockMinutes;
+    /** Weather place name pinned in config.xml (weather_city); empty guesses it from the network. */
+    final String weatherCity;
 
     private Config(List<String> dockApps, boolean fillDock, List<String> hiddenApps, String liveTvPackage,
                    String liveTvAction, Map<String, String> launchActions, Map<String, String> appLabels,
@@ -139,7 +141,7 @@ final class Config {
                    int wallpaperRotationMinutes, int wallpaperDim, String wallpaperOrder, boolean overlayApplied,
                    Festival festival, int[] inputKeycodes, List<String> appKeys,
                    List<RaceWeekend.Race> raceCalendar, boolean cinematicHome, boolean ambientGlow, int homeIdleClockMinutes,
-                   boolean topBar) {
+                   boolean topBar, String weatherCity) {
         this.inputKeycodes = inputKeycodes;
         this.appKeys = Collections.unmodifiableList(appKeys);
         this.dockApps = Collections.unmodifiableList(dockApps);
@@ -191,6 +193,7 @@ final class Config {
         this.ambientGlow = ambientGlow;
         this.homeIdleClockMinutes = homeIdleClockMinutes;
         this.topBar = topBar;
+        this.weatherCity = weatherCity;
     }
 
     /** The folder the theme tools push into; null when external storage is unavailable. */
@@ -243,6 +246,7 @@ final class Config {
         int idleClockMinutes = res.getInteger(R.integer.home_idle_clock_minutes);
         // K 2026-10-22：右上角顶栏整组默认隐藏，功能全进控制中心
         boolean topBar = res.getBoolean(R.bool.top_bar);
+        String weatherCity = res.getString(R.string.weather_city).trim();
         boolean applied = false;
 
         File dir = dir(ctx);
@@ -292,6 +296,7 @@ final class Config {
             ambientGlow = bool(json, "ambient_glow", ambientGlow);
             idleClockMinutes = integer(json, "home_idle_clock_minutes", idleClockMinutes, 0, 1440);
             topBar = bool(json, "top_bar", topBar);
+            weatherCity = string(json, "weather_city", weatherCity).trim();
         }
         // A theme push or reset invalidates choices made on the TV. On first use, remember the
         // current theme without clearing choices from an older launcher version.
@@ -352,7 +357,7 @@ final class Config {
                 Math.max(0, Math.min(100, skyIntensity)), settingsKeycodes, settingsKeyPanel, wallpaperEnabled, wallpaper,
                 wallpapers, rotationMinutes, wallpaperDim, wallpaperOrder, applied,
                 festival, inputKeycodes, appKeys, json == null ? Collections.emptyList() : raceCalendar(json), cinematic, ambientGlow,
-                Math.max(0, idleClockMinutes), topBar);
+                Math.max(0, idleClockMinutes), topBar, weatherCity);
     }
 
     /**
