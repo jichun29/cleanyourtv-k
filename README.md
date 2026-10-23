@@ -1,5 +1,7 @@
 # CleanYourTV · K 定制版
 
+**项目地址：https://github.com/jichun29/cleanyourtv-k**（复制给 AI 助手时带上这个地址，它才知道去哪里找源码和 PROMPT.md）
+
 **给国产电视的一块干净桌面。** 没有广告位，没有推荐流，只有你的 App、你选的壁纸、和时钟屏保。
 
 > 本仓库是开源电视桌面 [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) 的中文二次开发版，
@@ -8,6 +10,14 @@
 > [pengchujin/aerial-tv](https://github.com/pengchujin/aerial-tv)（桌面守护 / 一键更新 / 天气 / 返回键回顶）的功能。
 >
 > 小米国行电视实测可用（MiTV-ASTP0 / Android 9），理论上所有 Android TV 4.4+ 都能跑。
+
+## 让 AI 帮你装（最省事）
+
+不想自己敲命令？把这段话复制给 Claude Code（或任何能跑命令的 AI 助手），电脑和电视连同一 Wi-Fi 就行：
+
+> 请按照 https://github.com/jichun29/cleanyourtv-k 仓库里 PROMPT.md 的指引，帮我把电视去广告并装上这个桌面。项目源码就在这个仓库，tools/ 和 launcher/ 直接复用，不用从头写。我的电视型号是：____（填你的型号）。
+
+完整指令词在 [PROMPT.md](PROMPT.md)（英文原文，AI 直接读）。开始前记得在电视上打开开发者选项里的 USB/网络调试。
 
 ## 截图
 
@@ -24,7 +34,7 @@
 - **应用网格**：每行 5 个。聚焦时磁贴浮起、出现柔光；按到边缘轻轻倾斜回弹。
 - **应用全收录**：标准 TV 入口和手机入口都会显示，小米的「应用中心」「高清播放器」这类没标准入口的系统 App 也在。
 - **返回键**：在网格里按返回回到第一行；在第一行再按返回进入时钟屏保。
-- **天气城市**：默认按网络位置猜一次；`config.xml` 里 `weather_city` 写死城市名（如「宜昌」）就不猜了。
+- **天气城市**：默认按网络位置猜一次；打包时可在 `config.xml` 里写死城市名（如「宜昌」）就不猜了。
 
 ### 菜单键 = 应用菜单
 
@@ -141,25 +151,6 @@ QQ 音乐、夸克这类 App 没做 TV banner，桌面只能显示图标，这�
 ## 📢 电视去广告库（174 机型）
 
 仓库自带 [`debloat/`](debloat/) 目录：**174 个电视/盒子/投影机型**的去广告清单，每条注明这个包是干什么的、停用后失去什么。**只停用、不卸载，随时一键还原。**详见 [debloat/README.md](debloat/README.md)。
-
-## 定制你自己的 Dock 和网格
-
-编辑 `launcher/app/src/main/res/values/config.xml`：
-
-```xml
-<string-array name="dock_apps">
-    <item>com.netflix.ninja</item>        <!-- 前 4 个 = Dock -->
-    <!-- 后面的按顺序排网格 -->
-</string-array>
-
-<string-array name="hidden_apps">
-    <item>com.xiaomi.mitv.settings</item> <!-- 不想显示的系统 App -->
-</string-array>
-
-<string name="weather_city">宜昌</string>  <!-- 天气城市写死，不填按网络猜 -->
-```
-
-改完重新编译即可；也可以在电视上用桌面设置页在线改（不用编译）。
 
 ## 编译
 
