@@ -11,6 +11,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- 壁纸屏保层（2026-10-23 K）：必应每日图。默认隐藏；选了壁纸屏保才加载。
+         图后面压一层从下往上的黑色渐变，保证白亮图片上时间也看得清。 -->
+    <ImageView
+        android:id="@+id/dreamPhoto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:importantForAccessibility="no" />
+
+    <View
+        android:id="@+id/dreamScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/dream_scrim"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/dreamContent"
         android:layout_width="wrap_content"
@@ -30,6 +47,10 @@
             android:textSize="120sp"
             android:fontFamily="@font/outfit_extralight"
             android:letterSpacing="-0.04"
+            android:shadowColor="#B3000000"
+            android:shadowRadius="18"
+            android:shadowDx="0"
+            android:shadowDy="2"
             android:includeFontPadding="false" />
 
         <LinearLayout

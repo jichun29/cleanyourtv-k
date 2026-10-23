@@ -1,7 +1,5 @@
 # CleanYourTV · K 定制版
 
-**项目地址：https://github.com/jichun29/cleanyourtv-k**（复制给 AI 助手时带上这个地址，它才知道去哪里找源码和 PROMPT.md）
-
 **给国产电视的一块干净桌面。** 没有广告位，没有推荐流，只有你的 App、你选的壁纸、和时钟屏保。
 
 > 本仓库是开源电视桌面 [Gathin23/cleanyourtv](https://github.com/Gathin23/cleanyourtv) 的中文二次开发版，
@@ -13,11 +11,19 @@
 
 ## 让 AI 帮你装（最省事）
 
-不想自己敲命令？把这段话复制给 Claude Code（或任何能跑命令的 AI 助手），电脑和电视连同一 Wi-Fi 就行：
+不想自己敲命令？把下面这段话整段复制，发给能在电脑上跑命令的 AI 助手（Claude Code、Codex、Trae、豆包电脑版等），电脑和电视连同一 Wi-Fi 就行：
 
-> 请按照 https://github.com/jichun29/cleanyourtv-k 仓库里 PROMPT.md 的指引，帮我把电视去广告并装上这个桌面。项目源码就在这个仓库，tools/ 和 launcher/ 直接复用，不用从头写。我的电视型号是：____（填你的型号）。
+```text
+请帮我把开源电视桌面 CleanYourTV-K 装到我的电视上，并设为开机进入的桌面。
+项目地址：https://github.com/jichun29/cleanyourtv-k
+请先完整读完仓库里的 PROMPT.md（安装说明）再动手：tools/ 和 launcher/ 直接复用，不用从头写。
+我的电视型号是：____（填你的型号）
 
-完整指令词在 [PROMPT.md](PROMPT.md)（英文原文，AI 直接读）。开始前记得在电视上打开开发者选项里的 USB/网络调试。
+要求：在我的电脑上亲自运行命令，不要只把步骤告诉我；需要我在电视上操作时提醒我；
+装完后把验证命令的原始输出贴给我。
+```
+
+完整指令词（英文原文，AI 直接读）在 [PROMPT.md](PROMPT.md)。开始前记得在电视上打开开发者选项里的 USB/网络调试（设置 → 关于 → 连按「版本号」7 次 → 开发者选项 → 打开调试）。
 
 ## 截图
 
@@ -151,19 +157,6 @@ QQ 音乐、夸克这类 App 没做 TV banner，桌面只能显示图标，这�
 ## 📢 电视去广告库（174 机型）
 
 仓库自带 [`debloat/`](debloat/) 目录：**174 个电视/盒子/投影机型**的去广告清单，每条注明这个包是干什么的、停用后失去什么。**只停用、不卸载，随时一键还原。**详见 [debloat/README.md](debloat/README.md)。
-
-## 编译
-
-需要 JDK 17 + Android SDK 34：
-
-```bash
-cd launcher
-echo "sdk.dir=$HOME/Android" > local.properties
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-./gradlew assembleRelease          # 通用版
-./gradlew assembleRelease -PliteBuild=true   # 4.4 精简版
-# 产物: app/build/outputs/apk/release/app-release.apk
-```
 
 ## 致谢
 

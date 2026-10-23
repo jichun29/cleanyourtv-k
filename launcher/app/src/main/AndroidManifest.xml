@@ -23,6 +23,8 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- 一键 OTA：应用内下载 APK 后交给系统安装器 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- 自动清理内存（杀后台进程）需要；2026-10-23 快传+自动清理 -->
+    <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
 
     <!-- Android 11+ package visibility: lets the launcher list the TV apps it shows as tiles, and the
          apps that declare a module card (docs/specs/card.md). -->
@@ -114,6 +116,18 @@
             android:name=".UpdateActivity"
             android:label="@string/menu_check_update"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
+        <!-- 快传（2026-10-23 K）：手机浏览器推 APK 到电视装 -->
+        <activity
+            android:name=".QuickTransferActivity"
+            android:label="快传"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
+            android:exported="false" />
+        <!-- 清理白名单管理 -->
+        <activity
+            android:name=".WhitelistActivity"
+            android:label="清理白名单"
+            android:theme="@android:style/Theme.Black.NoTitleBar"
             android:exported="false" />
         <activity
             android:name=".ClockActivity"

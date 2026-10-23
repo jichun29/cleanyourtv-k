@@ -151,22 +151,120 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
-        <!-- 时间屏保（2026-10-23 K）：关了待机再久也不自动进屏保，默认开 -->
-        <LinearLayout style="@style/SettingsRowV2"
-            android:id="@+id/idleClockChoice"
-            android:layout_marginTop="10dp">
-            <TextView style="@style/SettingsRowLabel"
-                android:text="时间屏保" />
-            <TextView android:id="@+id/idleClockValue" style="@style/SettingsRowValue"
-                android:text="@string/on" />
-        </LinearLayout>
-
         <!-- 恢复主题默认 -->
         <LinearLayout style="@style/SettingsRowV2"
             android:id="@+id/followThemeChoice"
             android:layout_marginTop="10dp">
             <TextView style="@style/SettingsRowLabel"
                 android:text="@string/settings_follow_theme" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textColor="#66FFFFFF"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <!-- ========== 组 2.5：屏保（2026-10-23 K：从「动态效果」里独立出来） ========== -->
+        <TextView
+            style="@style/SettingsGroupTitle"
+            android:layout_marginTop="40dp"
+            android:text="屏保" />
+
+        <!-- 屏保样式：时间屏保 / 壁纸屏保 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:layout_marginTop="12dp"
+            android:focusable="false"
+            android:clickable="false">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="屏保样式" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/styleClock"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="时间" />
+                <TextView android:id="@+id/styleBing"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="20dp"
+                    android:text="壁纸" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 屏保开关 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/idleClockChoice"
+            android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="屏保开关" />
+            <TextView android:id="@+id/idleClockValue" style="@style/SettingsRowValue"
+                android:text="@string/on" />
+        </LinearLayout>
+
+        <!-- 壁纸换图间隔（仅壁纸模式可见） -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/wallpaperIntervalRow"
+            android:layout_marginTop="10dp"
+            android:focusable="false"
+            android:clickable="false"
+            android:visibility="gone">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="换图间隔" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/wpEveryTime"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="每次" />
+                <TextView android:id="@+id/wp1h"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="1小时" />
+                <TextView android:id="@+id/wp1d"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="1天" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 立即换一张（仅壁纸模式可见）：预览/手动换 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/wpNextChoice"
+            android:layout_marginTop="10dp"
+            android:visibility="gone">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="立即换一张" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textColor="#66FFFFFF"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <!-- 预览屏保（两种模式都能用） -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/previewScreensaverChoice"
+            android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="预览屏保" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -214,6 +312,102 @@
             android:layout_marginTop="10dp">
             <TextView style="@style/SettingsRowLabel"
                 android:text="@string/settings_check_update" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textColor="#66FFFFFF"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <!-- ========== 组 3.5：存储与清理（2026-10-23 K：快传 + 自动清理 + 白名单） ========== -->
+        <TextView
+            style="@style/SettingsGroupTitle"
+            android:layout_marginTop="40dp"
+            android:text="存储与清理" />
+
+        <!-- 快传：手机浏览器打开电视地址上传 APK 直接装 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/quickTransferChoice"
+            android:layout_marginTop="12dp">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="快传（手机推 APK 到电视）" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textColor="#66FFFFFF"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <!-- 自动清理内存开关 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/autoCleanChoice"
+            android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="自动清理内存" />
+            <TextView android:id="@+id/autoCleanValue" style="@style/SettingsRowValue"
+                android:text="@string/off" />
+        </LinearLayout>
+
+        <!-- 清理间隔分段（仅开启时可见） -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/autoCleanIntervalRow"
+            android:layout_marginTop="10dp"
+            android:focusable="false"
+            android:clickable="false"
+            android:visibility="gone">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="清理间隔" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView android:id="@+id/interval30"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="30分钟" />
+                <TextView android:id="@+id/interval60"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="1小时" />
+                <TextView android:id="@+id/interval180"
+                    style="@style/SettingsSegment"
+                    android:layout_width="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="3小时" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 白名单管理：已安装应用列表，确认键加/移出白名单 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/cleanWhitelistChoice"
+            android:layout_marginTop="10dp"
+            android:visibility="gone">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="清理白名单（这些 App 不会被清）" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textColor="#66FFFFFF"
+                android:textSize="24sp" />
+        </LinearLayout>
+
+        <!-- 立即清理一次 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/cleanNowChoice"
+            android:layout_marginTop="10dp"
+            android:visibility="gone">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="立即清理一次" />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

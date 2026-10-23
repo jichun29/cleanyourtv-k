@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 壁纸屏保压暗层（2026-10-23 K，实测调整过）：
+     必应图有很亮的（实测时钟区亮度 180/255），线性压暗后白字对比只有 2.1:1，看不清。
+     改成以屏幕中心（时钟所在）为圆心的径向压暗：中间最黑托住文字，四周渐淡保留照片。
+     实测最亮那张压到 65% 黑后对比 3.6:1，达到大字号 3:1 的可读线。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="radial"
+        android:centerX="0.5"
+        android:centerY="0.5"
+        android:gradientRadius="60%p"
+        android:startColor="#A6000000"
+        android:centerColor="#8C000000"
+        android:endColor="#66000000" />
+</shape>

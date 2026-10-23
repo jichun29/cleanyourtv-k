@@ -255,6 +255,23 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     };
     // Right after boot the clock is often wrong until network time arrives; don't wait a minute to catch up.
     private final IntentFilter timeFilter = new IntentFilter(Intent.ACTION_TIME_CHANGED);
+
+    // U 盘插拔（2026-10-23 K）：插上进网格、拔掉消失。MEDIA_* 广播必须带 file scheme。
+    private final IntentFilter usbFilter = new IntentFilter();
+    private final BroadcastReceiver usbReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (tileRefresh.onPackagesChanged()) reloadApps(false);
+        }
+    };
+
+    // 待机时清一次内存（2026-10-23 K）：睡前最安全，不打断观看。
+    private final BroadcastReceiver screenOffReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            MemoryCleaner.maybeClean(context, "待机");
+        }
+    };
     private final BroadcastReceiver timeReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -347,6 +364,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         greeting.setVisibility(View.GONE);
         clockBlock = findViewById(R.id.leftBlock);
         greetingColor = greeting.getCurrentTextColor();
+        // 自动清理内存（2026-10-23 K）：设置页开关，开启后按间隔清后台。
+        MemoryCleaner.init(this);
+        MemoryCleaner.reschedule(this);
+
         // 天气（2026-10-23，移植自 aerial-tv）：时钟行右边一小块，取到就显示，取不到一直 gone。
         weatherText = findViewById(R.id.weather);
         if (!BuildConfig.LITE) {
@@ -685,6 +706,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         super.onStart();
         started = true;
         tileRefresh.onStart();
+        usbFilter.addAction(Intent.ACTION_MEDIA_MOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+        usbFilter.addAction(Intent.ACTION_MEDIA_REMOVED);
+        usbFilter.addDataScheme("file");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(packageReceiver, packageFilter, Context.RECEIVER_NOT_EXPORTED);
             registerReceiver(timeReceiver, timeFilter, Context.RECEIVER_NOT_EXPORTED);
@@ -692,6 +717,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             registerReceiver(packageReceiver, packageFilter);
             registerReceiver(timeReceiver, timeFilter);
         }
+        // U 盘广播不带包名、来自系统，必须 EXPORTED。
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(usbReceiver, usbFilter, Context.RECEIVER_EXPORTED);
+        } else {
+            registerReceiver(usbReceiver, usbFilter);
+        }
+        registerReceiver(screenOffReceiver, new IntentFilter(Intent.ACTION_SCREEN_OFF));
+        // 回到桌面时检查到点没（桌面被系统杀过重启，Handle 计时会丢，靠 prefs 里的时间戳补）。
+        MemoryCleaner.reschedule(this);
+        MemoryCleaner.maybeClean(this, "回桌面");
         updateClockVisibility();
         // K 2026-10-22：自动检查更新（默认关闭；开了才每 3 小时查一次）。
         // 结果如果有新版，弹一次提示；用户点「跳过此版」后同一版不再打扰。
@@ -889,6 +924,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         started = false;
         unregisterReceiver(packageReceiver);
         unregisterReceiver(timeReceiver);
+        try { unregisterReceiver(usbReceiver); } catch (Exception ignored) {}
+        try { unregisterReceiver(screenOffReceiver); } catch (Exception ignored) {}
         handler.removeCallbacks(clockCheck);
         // 上游 v2.6.0：别的 App 占了屏幕，回来时只恢复焦点；是否重建交给 tileRefresh 判断。
         tileRefresh.onStop();

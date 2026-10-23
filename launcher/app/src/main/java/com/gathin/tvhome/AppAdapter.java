@@ -60,7 +60,7 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     }
 
     static final class Entry {
-        static final int APP = 0, HOME_SETTINGS = 1, CARD = 2, EMPTY = 3;
+        static final int APP = 0, HOME_SETTINGS = 1, CARD = 2, EMPTY = 3, USB = 4;
 
         final int kind;
         final String label;
@@ -307,6 +307,12 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
             fresh.add(new Entry(Entry.HOME_SETTINGS, ctx.getString(R.string.home_settings),
                     new ComponentName(ctx, HomeSettingsActivity.class), null,
                     Legacy.drawable(ctx, R.drawable.ic_home_settings), null, 0));
+        }
+        // U 盘磁贴（2026-10-23 K）：插上 U 盘时出现在网格里，点进去直达 U 盘目录。
+        if (UsbStorage.isPlugged()) {
+            fresh.add(new Entry(Entry.USB, "U 盘",
+                    new ComponentName(ctx, "usb-drive"), null,
+                    Legacy.drawable(ctx, R.drawable.ic_usb), "已连接", 0xFF5FA978));
         }
         docked = 0;
         while (docked < fresh.size() && favourites.contains(fresh.get(docked).pkg)) docked++;
@@ -596,6 +602,14 @@ public class AppAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         if (e.kind == Entry.HOME_SETTINGS) {
             ctx.startActivity(new Intent(ctx, HomeSettingsActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            return;
+        }
+        // U 盘磁贴（2026-10-23 K）：打开 U 盘目录
+        if (e.kind == Entry.USB) {
+            if (!UsbStorage.open(ctx)) {
+                Toast.makeText(ctx, "打不开 U 盘：装个文件管理器（如小白文件管理器）再试",
+                        Toast.LENGTH_LONG).show();
+            }
             return;
         }
         Intent i = new Intent(Intent.ACTION_MAIN)

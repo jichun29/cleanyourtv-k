@@ -156,6 +156,38 @@ public final class LauncherSettingsActivity extends Activity {
             refresh();
         });
 
+        // ===== 屏保（2026-10-23 K）：时间 / 壁纸 两种样式 + 换图间隔 + 预览 =====
+        findViewById(R.id.styleClock).setOnClickListener(v -> {
+            choices.edit().putString("screensaver_style", "clock").apply();
+            setResult(RESULT_OK);
+            refresh();
+        });
+        findViewById(R.id.styleBing).setOnClickListener(v -> {
+            if (BuildConfig.LITE) return;
+            choices.edit().putString("screensaver_style", "bing").apply();
+            setResult(RESULT_OK);
+            Toast.makeText(this, "壁纸屏保已开，电视空闲时会显示必应每日图", Toast.LENGTH_SHORT).show();
+            // 后台先把图池备好，第一次进屏保就有图（不阻塞界面）
+            new Thread(() -> BingScreensaver.ensurePool(this)).start();
+            refresh();
+        });
+        int[] wpMins = {0, 60, 1440};
+        int[] wpIds = {R.id.wpEveryTime, R.id.wp1h, R.id.wp1d};
+        for (int i = 0; i < 3; i++) {
+            final int m = wpMins[i];
+            findViewById(wpIds[i]).setOnClickListener(v -> {
+                choices.edit().putInt("screensaver_interval_min", m).apply();
+                refresh();
+            });
+        }
+        findViewById(R.id.wpNextChoice).setOnClickListener(v -> {
+            // 手动换一张：把上次换图时间清零，下次进屏保就会进一位
+            choices.edit().putLong("screensaver_last_change", 0L).apply();
+            Toast.makeText(this, "下次进屏保换新一张", Toast.LENGTH_SHORT).show();
+        });
+        findViewById(R.id.previewScreensaverChoice).setOnClickListener(v ->
+                startActivity(new Intent(this, ClockActivity.class)));
+
         // ===== 入口：恢复主题默认 =====
         followThemeChoice = findViewById(R.id.followThemeChoice);
         followThemeChoice.setOnClickListener(v -> {
@@ -180,6 +212,38 @@ public final class LauncherSettingsActivity extends Activity {
         updateAutoChoice.setOnClickListener(v -> setUpdateAuto(true));
         findViewById(R.id.checkUpdateChoice).setOnClickListener(v ->
                 startActivity(new Intent(this, UpdateActivity.class)));
+
+        // ===== 存储与清理（2026-10-23 K）：快传 + 自动清理 + 白名单 =====
+        findViewById(R.id.quickTransferChoice).setOnClickListener(v ->
+                startActivity(new Intent(this, QuickTransferActivity.class)));
+
+        findViewById(R.id.autoCleanChoice).setOnClickListener(v -> {
+            boolean now = choices.getBoolean("auto_clean_enabled", false);
+            choices.edit().putBoolean("auto_clean_enabled", !now).apply();
+            MemoryCleaner.reschedule(this);
+            refresh();
+        });
+
+        // 间隔分段：30 / 60 / 180 分钟
+        int[] mins = {30, 60, 180};
+        int[] segIds = {R.id.interval30, R.id.interval60, R.id.interval180};
+        for (int i = 0; i < 3; i++) {
+            final int m = mins[i];
+            findViewById(segIds[i]).setOnClickListener(v -> {
+                choices.edit().putInt("auto_clean_interval_min", m).apply();
+                MemoryCleaner.reschedule(this);
+                refresh();
+            });
+        }
+
+        findViewById(R.id.cleanWhitelistChoice).setOnClickListener(v ->
+                startActivity(new Intent(this, WhitelistActivity.class)));
+
+        findViewById(R.id.cleanNowChoice).setOnClickListener(v -> {
+            int n = MemoryCleaner.cleanNow(this);
+            Toast.makeText(this, n > 0 ? "已清理（" + n + " 个后台进程）" : "后台本来就很干净",
+                    Toast.LENGTH_SHORT).show();
+        });
 
         // ===== 系统：默认桌面、系统设置 =====
         findViewById(R.id.defaultHomeChoice).setOnClickListener(v -> {
@@ -275,6 +339,39 @@ public final class LauncherSettingsActivity extends Activity {
         boolean idleOn = choices.getBoolean("idle_clock_enabled", true);
         idleClockValue.setText(idleOn ? R.string.on : R.string.off);
         idleClockValue.setTextColor(idleOn ? 0xFF4ADE80 : 0x66FFFFFF);
+        // 屏保样式（2026-10-23 K）。lite 版（Android 4.4）没有壁纸模块，只给时间屏保。
+        boolean bingStyle = "bing".equals(choices.getString("screensaver_style", "clock"))
+                && !BuildConfig.LITE;
+        findViewById(R.id.styleClock).setSelected(!bingStyle);
+        TextView styleBing = findViewById(R.id.styleBing);
+        styleBing.setSelected(bingStyle);
+        styleBing.setVisibility(BuildConfig.LITE ? View.GONE : View.VISIBLE);
+        int wpVis = (bingStyle && idleOn) ? View.VISIBLE : View.GONE;
+        findViewById(R.id.wallpaperIntervalRow).setVisibility(wpVis);
+        findViewById(R.id.wpNextChoice).setVisibility(wpVis);
+        int wpCur = choices.getInt("screensaver_interval_min", 60);
+        int[] wpMins = {0, 60, 1440};
+        int[] wpIds = {R.id.wpEveryTime, R.id.wp1h, R.id.wp1d};
+        for (int i = 0; i < 3; i++) {
+            findViewById(wpIds[i]).setSelected(wpCur == wpMins[i]);
+        }
+        // 存储与清理：自动清理状态 + 相关行只在开启时露出来
+        boolean cleanOn = choices.getBoolean("auto_clean_enabled", false);
+        TextView autoCleanValue = findViewById(R.id.autoCleanValue);
+        autoCleanValue.setText(cleanOn ? R.string.on : R.string.off);
+        autoCleanValue.setTextColor(cleanOn ? 0xFF4ADE80 : 0x66FFFFFF);
+        int vis = cleanOn ? View.VISIBLE : View.GONE;
+        findViewById(R.id.autoCleanIntervalRow).setVisibility(vis);
+        findViewById(R.id.cleanWhitelistChoice).setVisibility(vis);
+        findViewById(R.id.cleanNowChoice).setVisibility(vis);
+        // 间隔分段高亮（分段背景是 selector：selected 态绿色填充，和更新方式分段一致）
+        int cur = choices.getInt("auto_clean_interval_min", 60);
+        int[] segIds = {R.id.interval30, R.id.interval60, R.id.interval180};
+        int[] mins = {30, 60, 180};
+        for (int i = 0; i < 3; i++) {
+            TextView seg = findViewById(segIds[i]);
+            seg.setSelected(cur == mins[i]);
+        }
         // 高级效果依赖动态效果：关掉动态效果时灰掉
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.45f);

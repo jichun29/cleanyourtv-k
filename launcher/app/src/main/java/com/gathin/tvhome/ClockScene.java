@@ -2,11 +2,14 @@ package com.gathin.tvhome;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
+import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ImageView;
 
+import java.io.File;
 import java.util.Random;
 
 /**
@@ -27,12 +30,16 @@ final class ClockScene {
     private int colorIndex;
     private int glowColor;
     private boolean firstPlace = true;
+    /** 有壁纸背景时停掉漂移，时钟固定在中间。 */
+    private boolean photoMode;
 
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
-            moveClock();
-            shiftGlow();
+            if (!photoMode) {
+                moveClock();
+                shiftGlow();
+            }
             handler.postDelayed(this, MOVE_MS);
         }
     };
@@ -58,6 +65,27 @@ final class ClockScene {
         });
         handler.removeCallbacks(tick);
         handler.postDelayed(tick, MOVE_MS);
+    }
+
+    /**
+     * 壁纸屏保（2026-10-23 K）：换成必应图当背景，时钟不再每分钟漂移（漂移是为了防黑色 AMOLED 烧屏，
+     * 有图时反而晃眼）。photo 为空 = 退回纯黑时钟屏保。
+     */
+    void applyPhoto(File photo, int targetW, int targetH) {
+        View root = (View) content.getParent();
+        ImageView img = root.findViewById(R.id.dreamPhoto);
+        View scrim = root.findViewById(R.id.dreamScrim);
+        if (img == null) return;
+        if (photo == null) return;    // 没图：保持纯黑时钟
+        Bitmap bmp = BingScreensaver.decode(photo, targetW, targetH);
+        if (bmp == null) return;
+        img.setImageBitmap(bmp);
+        img.setVisibility(View.VISIBLE);
+        if (scrim != null) scrim.setVisibility(View.VISIBLE);
+        // 有背景图时时钟停在中上偏下更耐看，且关掉漂移动画
+        photoMode = true;
+        content.setTranslationX(0f);
+        content.setTranslationY(0f);
     }
 
     void stop() {
