@@ -271,23 +271,24 @@
                             android:letterSpacing="0.14"
                             android:textAllCaps="true" />
                     </LinearLayout>
-
-                    <!-- 天气（2026-10-23，移植自 aerial-tv）：挂在时钟行右边，「宜昌 18° 晴 12/22°」。
-                         没取到数据时 gone，不占位置。 -->
-                    <TextView
-                        android:id="@+id/weather"
-                        android:gravity="left"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="bottom"
-                        android:layout_marginStart="18dp"
-                        android:layout_marginBottom="10dp"
-                        android:singleLine="true"
-                        android:textColor="#B3FFFFFF"
-                        android:textSize="14sp"
-                        android:fontFamily="@font/outfit_regular"
-                        android:visibility="gone" />
                 </LinearLayout>
+
+                <!-- 天气（2026-10-23，移植自 aerial-tv）：时钟日期下面一行，「武汉 20° 多云 15/22°」。
+                     不放时钟行右边——960dp 屏上会把日期挤截断。没取到数据时 gone，不占位置。 -->
+                <TextView
+                    android:id="@+id/weather"
+                    android:gravity="left"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="2dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="#B3FFFFFF"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/outfit_regular"
+                    android:letterSpacing="0.06"
+                    android:visibility="gone" />
 
             </LinearLayout>
 

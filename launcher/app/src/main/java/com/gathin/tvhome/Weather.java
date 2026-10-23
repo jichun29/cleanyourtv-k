@@ -81,6 +81,14 @@ public final class Weather {
         if (app == null) {
             app = ctx.getApplicationContext();
             prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+            // config 里的 weather_city 和上次定位的城市不一致 = 换城市了，旧坐标作废，重新定位。
+            String cfgCity = Config.load(app).weatherCity;
+            if (cfgCity != null && !cfgCity.isEmpty()
+                    && !cfgCity.equals(prefs.getString("place", null))) {
+                prefs.edit().remove("lat").remove("lon").remove("place")
+                        .remove("fetched_at").apply();
+                current = null;
+            }
             // 上次存的读数没过时就先用着，不等网络。
             if (System.currentTimeMillis() - prefs.getLong("fetched_at", 0) < STALE_MS) {
                 String kind = prefs.getString("kind", null);
@@ -139,25 +147,26 @@ public final class Weather {
         float lon = prefs.getFloat("lon", Float.NaN);
         String place = prefs.getString("place", null);
 
+        // config.xml 的 weather_city 优先，且和上次存的不一样就重新定位（换了城市不能还用旧坐标）。
+        String cfgCity = Config.load(app).weatherCity;
+        if (cfgCity != null && !cfgCity.isEmpty() && !cfgCity.equals(place)) {
+            double[] ll = geocode(cfgCity);
+            if (ll != null) {
+                lat = (float) ll[0];
+                lon = (float) ll[1];
+                place = cfgCity;
+                prefs.edit().putFloat("lat", lat).putFloat("lon", lon).putString("place", place).apply();
+            }
+        }
+
         if (lat != lat) { // NaN
-            // config.xml 的 weather_city 优先；没配就按公网 IP 猜一次。
-            String city = Config.load(app).weatherCity;
-            if (city != null && !city.isEmpty()) {
-                double[] ll = geocode(city);
-                if (ll != null) {
-                    lat = (float) ll[0];
-                    lon = (float) ll[1];
-                    place = city;
-                }
-            }
-            if (lat != lat) {
-                JSONObject ip = new JSONObject(get("https://ipinfo.io/json"));
-                String[] loc = ip.getString("loc").split(",");
-                lat = Float.parseFloat(loc[0]);
-                lon = Float.parseFloat(loc[1]);
-                String c = ip.optString("city");
-                place = c.isEmpty() ? null : c;
-            }
+            // 没写死城市：按公网 IP 猜一次。
+            JSONObject ip = new JSONObject(get("https://ipinfo.io/json"));
+            String[] loc = ip.getString("loc").split(",");
+            lat = Float.parseFloat(loc[0]);
+            lon = Float.parseFloat(loc[1]);
+            String c = ip.optString("city");
+            place = c.isEmpty() ? null : c;
             prefs.edit().putFloat("lat", lat).putFloat("lon", lon).apply();
         }
 
