@@ -48,6 +48,8 @@ public final class LauncherSettingsActivity extends Activity {
     private TextView advancedValue;
     private TextView advancedOffHint;
     private View followThemeChoice;
+    private View idleClockChoice;
+    private TextView idleClockValue;
     private TextView updateManualChoice;
     private TextView updateAutoChoice;
     private int columns;
@@ -142,6 +144,16 @@ public final class LauncherSettingsActivity extends Activity {
                         .setNegativeButton(android.R.string.cancel, null)
                         .show();
             }
+        });
+
+        // ===== 开关：时间屏保（关了待机再久也不自动进，默认开） =====
+        idleClockChoice = findViewById(R.id.idleClockChoice);
+        idleClockValue = findViewById(R.id.idleClockValue);
+        idleClockChoice.setOnClickListener(v -> {
+            boolean now = choices.getBoolean("idle_clock_enabled", true);
+            choices.edit().putBoolean("idle_clock_enabled", !now).apply();
+            setResult(RESULT_OK);
+            refresh();
         });
 
         // ===== 入口：恢复主题默认 =====
@@ -259,6 +271,10 @@ public final class LauncherSettingsActivity extends Activity {
         motionValue.setTextColor(reducedMotion ? 0xFF4ADE80 : 0x66FFFFFF);
         advancedValue.setText(advancedEffects ? R.string.on : R.string.off);
         advancedValue.setTextColor(advancedEffects ? 0xFF4ADE80 : 0x66FFFFFF);
+        // 时间屏保
+        boolean idleOn = choices.getBoolean("idle_clock_enabled", true);
+        idleClockValue.setText(idleOn ? R.string.on : R.string.off);
+        idleClockValue.setTextColor(idleOn ? 0xFF4ADE80 : 0x66FFFFFF);
         // 高级效果依赖动态效果：关掉动态效果时灰掉
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.45f);

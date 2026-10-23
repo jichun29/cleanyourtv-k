@@ -286,7 +286,7 @@ public final class UpdateChecker {
         }
     }
 
-    /** 更新日志简写：去掉 markdown 语法，压到 8 行内，适合电视屏。 */
+    /** 更新日志简写：去掉 markdown 语法 + 开发者向内容，压到 8 行内，适合电视屏。 */
     public static String shortenNotes(String body) {
         if (body == null) return "";
         String[] lines = body.replace("\r", "").split("\n");
@@ -298,6 +298,7 @@ public final class UpdateChecker {
             if (t.startsWith("![")) continue;          // 图片
             if (t.startsWith("|")) continue;           // 表格
             if (t.startsWith("---")) continue;         // 分隔线
+            if (t.startsWith("```")) continue;         // 代码块围栏
             if (t.startsWith(">")) t = t.substring(1).trim();   // 引用
             // 标题：去掉 # 号，保留文字
             if (t.startsWith("#")) {
@@ -309,10 +310,37 @@ public final class UpdateChecker {
             // 去掉加粗/斜体标记，电视上不渲染 markdown
             t = t.replace("**", "").replace("__", "");
             if (t.isEmpty()) continue;
+            // 2026-10-23 K：更新日志是给电视前的用户看的，开发者向内容一律过滤：
+            // 配置文件字段名 / 代码符号 / 编译参数 / adb 命令 / 实现细节括注
+            if (isDevLine(t)) continue;
+            t = stripDevNotes(t);
+            if (t.isEmpty()) continue;
             sb.append(t).append('\n');
             if (++kept >= 8) break;
         }
         String r = sb.toString().trim();
         return r.isEmpty() ? "修复若干问题，体验更稳定" : r;
+    }
+
+    /** 整行都是开发者向内容的判据：配置文件、代码符号、命令行。 */
+    private static boolean isDevLine(String t) {
+        String l = t.toLowerCase(java.util.Locale.ROOT);
+        // 「在 config.xml 里把 xxx 写死」这类说明
+        if (l.matches(".*\\b(config\\.xml|build\\.gradle|androidmanifest|shared_prefs|proguard)\\b.*")) return true;
+        if (l.contains("weather_city") || l.contains("home_idle_clock") || l.contains("minsdk")
+                || l.contains("gradlew") || l.contains("adb shell") || l.contains("adb install")) return true;
+        // 纯代码行（类名/方法名/键值对）
+        if (t.matches("^[A-Za-z_$][\\w$]*(\\.[\\w$]+)+\\s*[:=].*")) return true;
+        return false;
+    }
+
+    /** 行内括注里的实现细节删掉：「（Kotlin/Compose → Java/View 重写）」「（config.xml 可配）」这类。 */
+    private static String stripDevNotes(String t) {
+        String out = t;
+        // 删掉含开发者关键词的括号注
+        out = out.replaceAll("[（(][^（）()]*(Kotlin|Compose|Java|View|config\\.xml|minSdk|API|adb|见 README|源码|类|方法|字段)[^（）()]*[)）]", "");
+        // 行尾「见 xxx」指引
+        out = out.replaceAll("[，,]?\\s*（?见\\s*(README|docs?/|源码)[^）)]*[）)]?\\s*$", "");
+        return out.trim().replaceAll("\\s{2,}", " ");
     }
 }

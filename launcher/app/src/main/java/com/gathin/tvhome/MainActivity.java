@@ -112,6 +112,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private String liveTvPkg;
     /** Idle time on Home before ClockActivity; 0 is off (config.xml, home_idle_clock_minutes). */
     private long idleClockMs;
+    /** 时间屏保默认闲置分钟数（config.xml 没配 home_idle_clock_minutes 时用）。 */
+    private static final int DEFAULT_IDLE_CLOCK_MINUTES = 5;
     private final Runnable showIdleClock = () -> startActivity(new Intent(this, ClockActivity.class));
     private String liveTvAction;
     private String inputAction;
@@ -288,9 +290,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         festival = cfg.festival;
         festive = festival.active(LocalDate.now());
         liveTvPkg = cfg.liveTvPackage;
-        idleClockMs = cfg.homeIdleClockMinutes * MINUTE_MS;
+        // 时间屏保开关（2026-10-23 K）：桌面设置里可关；关了待机再久也不进屏保。默认开。
+        boolean idleEnabled = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getBoolean("idle_clock_enabled", true);
+        idleClockMs = idleEnabled ? (cfg.homeIdleClockMinutes > 0
+                ? cfg.homeIdleClockMinutes : DEFAULT_IDLE_CLOCK_MINUTES) * MINUTE_MS : 0;
 
-        // Android 9+ 读 WiFi SSID 需要位置权限（运行时申请，只弹一次）
+        // Android 9+ 读 WiFi SSID 需要位置权限；天气定位也用它（2026-10-23）。运行时申请，只弹一次。
         if (Build.VERSION.SDK_INT >= 23
                 && checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
                         != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -337,6 +343,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         // still follows the dock.
         if (!cfg.dockTitle) hero.setVisibility(View.GONE);
         greeting = findViewById(R.id.greeting);
+        // K 2026-10-23：左上角不显示「上午好/下午好」问候语，只留时间/日期/天气。
+        greeting.setVisibility(View.GONE);
         clockBlock = findViewById(R.id.leftBlock);
         greetingColor = greeting.getCurrentTextColor();
         // 天气（2026-10-23，移植自 aerial-tv）：时钟行右边一小块，取到就显示，取不到一直 gone。

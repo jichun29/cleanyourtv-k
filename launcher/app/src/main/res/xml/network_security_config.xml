@@ -5,5 +5,6 @@
         <domain includeSubdomains="false">api.open-meteo.com</domain>
         <domain includeSubdomains="false">geocoding-api.open-meteo.com</domain>
         <domain includeSubdomains="false">ipinfo.io</domain>
+        <domain includeSubdomains="false">api.bigdatacloud.net</domain>
     </domain-config>
 </network-security-config>

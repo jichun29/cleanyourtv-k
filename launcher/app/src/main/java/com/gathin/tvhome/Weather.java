@@ -160,13 +160,21 @@ public final class Weather {
         }
 
         if (lat != lat) { // NaN
-            // 没写死城市：按公网 IP 猜一次。
-            JSONObject ip = new JSONObject(get("https://ipinfo.io/json"));
-            String[] loc = ip.getString("loc").split(",");
-            lat = Float.parseFloat(loc[0]);
-            lon = Float.parseFloat(loc[1]);
-            String c = ip.optString("city");
-            place = c.isEmpty() ? null : c;
+            // 没写死城市：优先用系统定位（GPS/网络，装时弹过一次授权），没有才按公网 IP 猜。
+            android.location.Location loc = lastKnownLocation();
+            if (loc != null) {
+                lat = (float) loc.getLatitude();
+                lon = (float) loc.getLongitude();
+                // 反查城市名（Open-Meteo 地理编码不支持反查，用 BigDataCloud 免 key 反向接口，国内可直连）
+                place = reverseGeocode(lat, lon);
+            } else {
+                JSONObject ip = new JSONObject(get("https://ipinfo.io/json"));
+                String[] loc2 = ip.getString("loc").split(",");
+                lat = Float.parseFloat(loc2[0]);
+                lon = Float.parseFloat(loc2[1]);
+                String c = ip.optString("city");
+                place = c.isEmpty() ? null : c;
+            }
             prefs.edit().putFloat("lat", lat).putFloat("lon", lon).apply();
         }
 
@@ -191,6 +199,42 @@ public final class Weather {
                 (int) Math.round(cur.getDouble("temperature_2m")),
                 kindOf(cur.getInt("weather_code")),
                 high, low, place);
+    }
+
+    /** 系统最后一次已知定位（不给权限/没开过定位返回 null）。电视基本没 GPS，靠网络定位。 */
+    private static android.location.Location lastKnownLocation() {
+        try {
+            android.location.LocationManager lm = (android.location.LocationManager)
+                    app.getSystemService(Context.LOCATION_SERVICE);
+            if (lm == null) return null;
+            android.location.Location best = null;
+            for (String provider : new String[]{"gps", "network"}) {
+                try {
+                    android.location.Location l = lm.getLastKnownLocation(provider);
+                    if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+                } catch (SecurityException ignored) {}
+            }
+            // 超过 24 小时的定位不新鲜了，不拿它定天气城市
+            if (best != null && System.currentTimeMillis() - best.getTime() > 24 * 3600_000L) return null;
+            return best;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 经纬度反查中文城市名（BigDataCloud 免 key，国内可直连）。失败返回 null。 */
+    private static String reverseGeocode(double lat, double lon) {
+        try {
+            JSONObject j = new JSONObject(get(
+                    "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat
+                            + "&longitude=" + lon + "&localityLanguage=zh"));
+            String city = j.optString("city");
+            if (city.isEmpty()) city = j.optString("locality");
+            return city.isEmpty() ? null : city;
+        } catch (Exception e) {
+            Log.w(TAG, "reverse geocode failed", e);
+            return null;
+        }
     }
 
     /** Open-Meteo 的地理编码，中文城市名直查（language=zh）。找不到返回 null。 */

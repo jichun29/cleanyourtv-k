@@ -151,6 +151,16 @@
             android:textSize="13sp"
             android:visibility="gone" />
 
+        <!-- 时间屏保（2026-10-23 K）：关了待机再久也不自动进屏保，默认开 -->
+        <LinearLayout style="@style/SettingsRowV2"
+            android:id="@+id/idleClockChoice"
+            android:layout_marginTop="10dp">
+            <TextView style="@style/SettingsRowLabel"
+                android:text="时间屏保" />
+            <TextView android:id="@+id/idleClockValue" style="@style/SettingsRowValue"
+                android:text="@string/on" />
+        </LinearLayout>
+
         <!-- 恢复主题默认 -->
         <LinearLayout style="@style/SettingsRowV2"
             android:id="@+id/followThemeChoice"
