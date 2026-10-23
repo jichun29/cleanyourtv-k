@@ -9,9 +9,28 @@
 
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
+        <item>com.baipiaozhe.tv</item>
+        <item>com.foni.andrid.fan</item>
+        <item>com.ktcp.csvideo</item>
+        <item>com.tv.qx</item>
+        <item>com.github.tvbox.osc.juo</item>
+        <item>com.tastysoup.tv</item>
+        <item>com.xx.blbl</item>
+        <item>com.xftv.tv</item>
+        <item>com.wolf.lmu</item>
+        <item>com.trim.tv</item>
+        <item>com.dangbeimarket</item>
+        <item>com.ant.store.appstore</item>
+        <item>fun.yecao.helper</item>
+        <item>org.xbmc.kodi</item>
+        <item>com.quark.yun.tv</item>
+        <item>com.xiaobaifile.tv</item>
+        <item>net.xmhx3.helper</item>
+        <item>com.tencent.qqmusictv</item>
         <item>com.netflix.ninja</item>
         <item>com.amazon.amazonvideo.livingroom</item>
         <item>com.google.android.youtube.tv</item>
+        <item>com.disney.disneyplus</item>
         <item>in.startv.hotstar</item>
     </string-array>
     <!-- With fewer dock_apps than columns (or a dock app that is not installed), the free dock slots take
@@ -21,9 +40,6 @@
 
     <!-- Apps never shown as tiles (e.g. the Live TV app, which the Inputs menu already covers). -->
     <string-array name="hidden_apps">
-        <item>com.mediatek.wwtv.tvcenter</item>
-        <item>com.mitv.gallery</item>
-        <!-- 小米电视系统组件：没有桌面图标、混在网格里是噪音，默认隐藏（装其他品牌电视时这些包不存在，自动跳过） -->
         <item>com.xiaomi.mitv.settings</item>
         <item>com.xiaomi.mitv.smartshare</item>
         <item>com.xiaomi.mitv.tvmanager</item>
@@ -31,7 +47,7 @@
     </string-array>
 
     <!-- The TV's Live TV / tuner app, offered at the end of the Inputs menu. Leave empty to omit. -->
-    <string name="live_tv_package" translatable="false">com.mediatek.wwtv.tvcenter</string>
+    <string name="live_tv_package" translatable="false"></string>
 
     <!-- Some TVs give their Live TV app no leanback entry point at all, so `live_tv_package` above
          resolves to nothing (TCL Android TV 9 on China-market sets is one). This action is then sent
@@ -163,7 +179,7 @@
     <bool name="show_home_settings_shortcut">false</bool>
 
     <!-- Installed launchable apps, including ordinary Android apps. Also settable in config.json. -->
-    <bool name="app_library">true</bool>
+    <bool name="app_library">false</bool>
 
     <!-- Module cards: an app that declares a card (docs/specs/card.md) can stand in for its tile with its own
          label, caption and glow colour, once you answer Show on the prompt. false: never look for cards or ask. -->
@@ -207,5 +223,5 @@
     <integer name="home_idle_clock_minutes">0</integer>
 
     <!-- 天气城市（2026-10-23 K 定制）：中文城市名（如 "宜昌"）写死就不按 IP 猜了；空 = 按公网 IP 猜。 -->
-    <string name="weather_city" translatable="false"></string>
+    <string name="weather_city" translatable="false">宜昌</string>
 </resources>
